@@ -8,6 +8,7 @@ import MainDashboard from './components/MainDashboard.jsx';
 import JobPortal from './components/Dashboard.jsx';
 import AdminDashboard from './components/AdminDashboard.jsx';
 import AdminJobPortal from './components/AdminJobPortal.jsx';
+import AdminApplicationViewer from './components/AdminApplicationViewer.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -25,6 +26,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         {/* Admin routes */}
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/admin/jobs" element={<AdminJobPortal />} />
+        <Route path="/admin/applications" element={<AdminApplicationViewer />} />
 
         {/* Group member placeholders */}
         <Route
