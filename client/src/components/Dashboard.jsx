@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const Dashboard = () => {
+const JobPortal = () => {
   const [jobs] = useState([
     {
       _id: '1',
@@ -164,5 +164,5 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default JobPortal;
 
