@@ -125,7 +125,7 @@ const Marketplace = () => {
                 </div>
                 <div className="p-5">
                   <h3 className="text-lg font-bold text-slate-900 line-clamp-1 mb-1">{item.title}</h3>
-                  <p className="text-2xl font-extrabold text-purple-600 mb-3">Rs. {item.price.toLocaleString()}</p>
+                  <p className="text-2xl font-extrabold text-purple-600 mb-3">Rs. {item.price ? item.price.toLocaleString() : 'N/A'}</p>
                   <p className="text-sm text-slate-500 line-clamp-2 mb-4 h-10">{item.description}</p>
 
                   <div className="border-t border-gray-100 pt-4 flex justify-between items-center">

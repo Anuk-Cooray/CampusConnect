@@ -38,7 +38,7 @@ const AdminDashboard = () => {
     {
       title: 'Accommodation Control',
       description: 'Moderate boarding listings and resolve student disputes.',
-      path: '/admin/accommodation',
+      path: '/admin/accommodations',
       accent: 'group-hover:border-emerald-500 group-hover:shadow-emerald-500/20',
       iconText: 'text-emerald-400',
       icon: (

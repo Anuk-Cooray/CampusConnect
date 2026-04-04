@@ -12,7 +12,6 @@ const Accommodation = () => {
   const [filterGender, setFilterGender] = useState('All');
   const [maxPrice, setMaxPrice] = useState('');
 
-  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
