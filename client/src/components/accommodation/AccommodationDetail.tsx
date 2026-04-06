@@ -5,6 +5,9 @@ import ChatWindow from "../chat/ChatWindow";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
+const toUrl = (base: string, path: string) =>
+  `${base}/${path.replace(/\\/g, '/').replace(/^\//, '')}`;
+
 const facilityIcons: Record<string, string> = {
   WiFi: "📶", Parking: "🅿️", Kitchen: "🍳",
   "Air Conditioning": "❄️", "Hot Water": "🚿", Security: "🔒",
@@ -24,7 +27,7 @@ function AccommodationDetail() {
 
   useEffect(() => {
     axios.get(`${API}/api/accommodations/${id}`)
-      .then(({ data }) => setAcc(data.data))
+      .then(({ data }) => setAcc(data.data ?? data))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -89,7 +92,7 @@ function AccommodationDetail() {
             <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100">
               <div className="relative h-72 md:h-96 bg-slate-100">
                 <img
-                  src={`${API}${acc.photos[activePhoto]}`}
+                  src={toUrl(API, acc.photos[activePhoto])}
                   alt={acc.title}
                   className="w-full h-full object-cover"
                 />
@@ -104,10 +107,15 @@ function AccommodationDetail() {
               </div>
               <div className="flex gap-2 p-3 overflow-x-auto">
                 {acc.photos.map((p: string, i: number) => (
-                  <img key={i} src={`${API}${p}`} alt="" onClick={() => setActivePhoto(i)}
+                  <img
+                    key={i}
+                    src={toUrl(API, p)}
+                    alt=""
+                    onClick={() => setActivePhoto(i)}
                     className={`h-14 w-20 object-cover rounded-xl cursor-pointer flex-shrink-0 transition-all ${
                       i === activePhoto ? "ring-2 ring-blue-600" : "opacity-60 hover:opacity-100"
-                    }`} />
+                    }`}
+                  />
                 ))}
               </div>
             </div>

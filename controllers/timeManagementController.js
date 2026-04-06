@@ -4,7 +4,7 @@ const { Assignment, StudySession, Exam } = require('../models/TimeManagement');
 // ── ASSIGNMENTS ──
 exports.getAssignments = async (req, res) => {
   try {
-    const assignments = await Assignment.find({ userId: req.user._id }).sort({ deadline: 1 });
+    const assignments = await Assignment.find({ userId: req.user.id }).sort({ deadline: 1 });
     res.json({ success: true, data: assignments });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -15,7 +15,7 @@ exports.createAssignment = async (req, res) => {
   try {
     const { title, subject, description, deadline, priority } = req.body;
     const assignment = await Assignment.create({
-      userId: req.user._id, title, subject, description, deadline, priority
+      userId: req.user.id, title, subject, description, deadline, priority
     });
     res.status(201).json({ success: true, data: assignment });
   } catch (err) {
@@ -26,7 +26,7 @@ exports.createAssignment = async (req, res) => {
 exports.updateAssignment = async (req, res) => {
   try {
     const assignment = await Assignment.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user._id },
+      { _id: req.params.id, userId: req.user.id },
       req.body,
       { new: true }
     );
@@ -39,7 +39,7 @@ exports.updateAssignment = async (req, res) => {
 
 exports.deleteAssignment = async (req, res) => {
   try {
-    await Assignment.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+    await Assignment.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -49,7 +49,7 @@ exports.deleteAssignment = async (req, res) => {
 // ── STUDY SESSIONS ──
 exports.getStudySessions = async (req, res) => {
   try {
-    const sessions = await StudySession.find({ userId: req.user._id }).sort({ date: 1 });
+    const sessions = await StudySession.find({ userId: req.user.id }).sort({ date: 1 });
     res.json({ success: true, data: sessions });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -60,7 +60,7 @@ exports.createStudySession = async (req, res) => {
   try {
     const { subject, topic, date, startTime, endTime, notes } = req.body;
     const session = await StudySession.create({
-      userId: req.user._id, subject, topic, date, startTime, endTime, notes
+      userId: req.user.id, subject, topic, date, startTime, endTime, notes
     });
     res.status(201).json({ success: true, data: session });
   } catch (err) {
@@ -71,7 +71,7 @@ exports.createStudySession = async (req, res) => {
 exports.updateStudySession = async (req, res) => {
   try {
     const session = await StudySession.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user._id },
+      { _id: req.params.id, userId: req.user.id },
       req.body,
       { new: true }
     );
@@ -84,7 +84,7 @@ exports.updateStudySession = async (req, res) => {
 
 exports.deleteStudySession = async (req, res) => {
   try {
-    await StudySession.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+    await StudySession.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -94,21 +94,26 @@ exports.deleteStudySession = async (req, res) => {
 // ── EXAMS ──
 exports.getExams = async (req, res) => {
   try {
-    const exams = await Exam.find({ userId: req.user._id }).sort({ examDate: 1 });
+    console.log('getExams hit, user:', req.user);
+    const exams = await Exam.find({ userId: req.user.id }).sort({ examDate: 1 });
     res.json({ success: true, data: exams });
   } catch (err) {
+    console.log('GET EXAMS ERROR:', err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
 exports.createExam = async (req, res) => {
   try {
+    console.log('createExam hit, user:', req.user);
+    console.log('body:', req.body);
     const { subject, examDate, startTime, venue, notes } = req.body;
     const exam = await Exam.create({
-      userId: req.user._id, subject, examDate, startTime, venue, notes
+      userId: req.user.id, subject, examDate, startTime, venue, notes
     });
     res.status(201).json({ success: true, data: exam });
   } catch (err) {
+    console.log('CREATE EXAM ERROR:', err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -116,7 +121,7 @@ exports.createExam = async (req, res) => {
 exports.updateExam = async (req, res) => {
   try {
     const exam = await Exam.findOneAndUpdate(
-      { _id: req.params.id, userId: req.user._id },
+      { _id: req.params.id, userId: req.user.id },
       req.body,
       { new: true }
     );
@@ -129,7 +134,7 @@ exports.updateExam = async (req, res) => {
 
 exports.deleteExam = async (req, res) => {
   try {
-    await Exam.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+    await Exam.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

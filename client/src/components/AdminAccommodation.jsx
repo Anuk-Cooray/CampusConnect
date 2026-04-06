@@ -88,8 +88,8 @@ const AdminAccommodation = () => {
 
   const formatImageUrl = (urls) =>
     urls && urls.length > 0
-      ? `http://localhost:5000/${urls[0].replace(/\\/g, '/')}`
-      : 'https://via.placeholder.com/150?text=No+Image';
+    ? `http://localhost:5000/${urls[0].replace('uploads\\', 'uploads/')}`
+    : 'https://via.placeholder.com/150?text=No+Image';
 
   const pendingPlaces = places.filter((p) => p.status === 'Pending');
   const activePlaces = places.filter((p) => p.status === 'Approved');

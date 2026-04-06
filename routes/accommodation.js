@@ -5,13 +5,13 @@ const Accommodation = require('../models/Accommodation');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
+  cb(null, 'uploads/accommodations/');
+},
   filename: function (req, file, cb) {
     cb(null, Date.now() + '-' + file.originalname.replace(/\s+/g, '-'));
   },
 });
-const upload = multer({ storage: storage });
+const uploads = multer({ storage: storage });
 
 // @route   GET /api/accommodation
 router.get('/', async (req, res) => {
@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
 });
 
 // @route   POST /api/accommodation (Student OR Admin)
-router.post('/', upload.array('photos', 5), async (req, res) => {
+router.post('/', uploads.array('photos', 5), async (req, res) => {
   try {
     const {
       title,
@@ -109,7 +109,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // @route   PUT /api/accommodation/:id
-router.put('/:id', upload.array('photos', 5), async (req, res) => {
+router.put('/:id', uploads.array('photos', 5), async (req, res) => {
   try {
     const {
       title,

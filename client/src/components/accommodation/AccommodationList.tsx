@@ -6,7 +6,7 @@ import axios from "axios";
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function AccommodationList() {
-  const [accommodations, setAccommodations] = useState([]);
+  const [accommodations, setAccommodations] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -22,9 +22,10 @@ export default function AccommodationList() {
       if (filters.facilities?.length) params.append("facilities", filters.facilities.join(","));
 
       const { data } = await axios.get(`${API}/api/accommodations?${params}`);
-      setAccommodations(data.data);
+      setAccommodations(Array.isArray(data) ? data : data.data ?? data.accommodations ?? []);
     } catch {
       setError("Failed to load accommodations. Please try again.");
+      setAccommodations([]);
     } finally {
       setLoading(false);
     }
@@ -33,12 +34,9 @@ export default function AccommodationList() {
   useEffect(() => { fetchAccommodations(); }, [fetchAccommodations]);
 
   return (
-    
     <div className="h-[85vh] overflow-hidden">
-      
       <div className="max-w-7xl mx-auto px-4 py-6 h-full overflow-y-auto">
 
-      
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 mb-6">
           <FilterBar onFilter={fetchAccommodations} loading={loading} />
         </div>
@@ -64,7 +62,7 @@ export default function AccommodationList() {
           </div>
         ) : accommodations.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-5xl mb-4"></p>
+            <p className="text-5xl mb-4">🏠</p>
             <p className="text-slate-500 text-lg font-medium">No accommodations found</p>
             <p className="text-slate-400 text-sm mt-1">Try adjusting your filters</p>
           </div>
@@ -73,7 +71,6 @@ export default function AccommodationList() {
             <p className="text-sm text-slate-500 mb-4">
               {accommodations.length} accommodation{accommodations.length !== 1 ? "s" : ""} found
             </p>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {accommodations.map((a: any) => (
                 <AccommodationCard key={a._id} accommodation={a} />

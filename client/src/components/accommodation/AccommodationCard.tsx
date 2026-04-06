@@ -28,6 +28,9 @@ const facilityIcons: Record<string, string> = {
   Furnished: "🛋️", "Water Included": "💧", "Electricity Included": "⚡",
 };
 
+const toUrl = (base: string, path: string) =>
+  `${base}/${path.replace(/\\/g, '/').replace(/^\//, '')}`;
+
 export default function AccommodationCard({ accommodation }: Props) {
   const [imgIdx, setImgIdx] = useState(0);
   const navigate = useNavigate();
@@ -44,7 +47,7 @@ export default function AccommodationCard({ accommodation }: Props) {
       <div className="relative h-52 overflow-hidden bg-slate-700">
         {accommodation.photos?.[imgIdx] ? (
           <img
-            src={`${BASE}${accommodation.photos[imgIdx]}`}
+            src={toUrl(BASE, accommodation.photos[imgIdx])}
             alt={accommodation.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />

@@ -20,7 +20,7 @@ const io = new Server(server, {
 
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static('uploads'));
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/jobs', require('./routes/jobs'));
@@ -32,7 +32,7 @@ app.use('/api/accommodations', require('./routes/accommodation'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/profiles', require('./routes/profiles'));
 app.use('/api/notifications', require('./routes/notifications'));
-
+app.use("/api/time", require("./routes/timeManagement"));
 connectDB();
 
 io.on('connection', (socket) => {

@@ -85,7 +85,8 @@ const MainDashboard = () => {
   const navigationLinks = [
     { name: 'Study Support Feed', path: '/dashboard', icon: '📚', color: 'bg-blue-100 text-blue-600', active: true },
     { name: 'Job & Internship Portal', path: '/jobs', icon: '💼', color: 'bg-indigo-100 text-indigo-600', active: false },
-    { name: 'Accommodation', path: '/accommodation', icon: '🏠', color: 'bg-emerald-100 text-emerald-600', active: false },
+    { name: 'Accommodation', path: '/accommodations', icon: '🏠', color: 'bg-emerald-100 text-emerald-600', active: false },
+    { name: 'Timetable Management', path: '/time-management', icon: '📅', color: 'bg-yellow-100 text-yellow-600', active: false },
     { name: 'Student Marketplace', path: '/marketplace', icon: '🛒', color: 'bg-purple-100 text-purple-600', active: false },
   ];
 

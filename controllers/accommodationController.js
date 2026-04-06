@@ -48,7 +48,7 @@ exports.createAccommodation = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Maximum 5 photos allowed' });
     }
 
-    const photoPaths = files.map(f => `/uploads/accommodations/${f.filename}`);
+    const photoPaths = files.map(f => `/uploads/accommodations/${req.file.filename}`);
     const {
       title, description, price, distance, distanceUnit, address,
       facilities, gender, availableRooms,
