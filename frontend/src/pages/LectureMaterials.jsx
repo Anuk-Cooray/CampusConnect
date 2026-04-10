@@ -149,13 +149,13 @@ const LectureMaterials = () => {
                   <label className="block text-sm font-semibold text-slate-600 mb-1.5">Title</label>
                   <input type="text" required placeholder="e.g. Data Structures Lecture 1" value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none transition-all text-sm" />
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-600 mb-1.5">Subject Code</label>
                   <input type="text" required placeholder="e.g. IT2030" value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none transition-all text-sm" />
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all text-sm" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-600 mb-1.5">
@@ -163,18 +163,18 @@ const LectureMaterials = () => {
                   </label>
                   <input type="file" accept=".pdf"
                     onChange={(e) => setFile(e.target.files[0])}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none transition-all text-sm file:mr-3 file:px-3 file:py-1 file:rounded-lg file:border-0 file:bg-teal-50 file:text-teal-700 file:font-semibold file:text-xs" />
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all text-sm file:mr-3 file:px-3 file:py-1 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:font-semibold file:text-xs" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-slate-600 mb-1.5">Description</label>
                 <textarea placeholder="Brief description of the material content..." value={description}
                   onChange={(e) => setDescription(e.target.value)} rows="3"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-teal-400 focus:ring-2 focus:ring-teal-100 outline-none transition-all text-sm" />
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 outline-none transition-all text-sm" />
               </div>
               <div className="flex items-end gap-3">
                 <button type="submit" disabled={loading}
-                  className="flex-1 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-teal-200 hover:shadow-xl transition-all active:scale-95 disabled:opacity-60">
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-200 hover:shadow-xl transition-all active:scale-95 disabled:opacity-60">
                   {loading ? 'Saving...' : editingId ? 'Update Material' : 'Upload Material'}
                 </button>
                 {editingId && (
@@ -193,19 +193,19 @@ const LectureMaterials = () => {
           <h2 className="text-2xl font-bold text-slate-900 mb-6">📚 Lecture Materials</h2>
           {materials.length === 0 ? (
             <div className="text-center py-16">
-              <div className="w-20 h-20 mx-auto mb-4 bg-teal-50 rounded-full flex items-center justify-center">
-                <svg className="w-10 h-10 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+              <div className="w-20 h-20 mx-auto mb-4 bg-blue-50 rounded-full flex items-center justify-center">
+                <svg className="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               </div>
               <p className="text-slate-400 font-medium">No materials uploaded yet.</p>
             </div>
           ) : (
             <div className="space-y-3">
               {materials.map((mat) => (
-                <div key={mat._id} className="group border border-slate-100 rounded-2xl p-5 hover:shadow-md hover:border-teal-300 transition-all hover:bg-teal-50/20">
+                <div key={mat._id} className="group border border-slate-100 rounded-2xl p-5 hover:shadow-md hover:border-blue-300 transition-all hover:bg-blue-50/20">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-400 to-emerald-500 flex items-center justify-center text-white shadow flex-shrink-0">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-white shadow flex-shrink-0">
                           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                         </div>
                         <div className="min-w-0 flex-1">
@@ -225,13 +225,13 @@ const LectureMaterials = () => {
                     <div className="flex gap-2 flex-shrink-0">
                       <button 
                         onClick={() => handleDownload(mat._id, mat.fileName)}
-                        className="flex items-center gap-1 text-xs font-bold text-white bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 px-4 py-2.5 rounded-lg transition-all active:scale-95 shadow-md">
+                        className="flex items-center gap-1 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-4 py-2.5 rounded-lg transition-all active:scale-95 shadow-md hover:shadow-lg">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                         PDF
                       </button>
                       {isAdmin && (
                         <>
-                          <button onClick={() => handleEdit(mat)} className="text-xs font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 px-3 py-2 rounded-lg transition-all">Edit</button>
+                          <button onClick={() => handleEdit(mat)} className="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg transition-all">Edit</button>
                           <button onClick={() => handleDelete(mat._id)} className="text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg transition-all">Delete</button>
                         </>
                       )}
