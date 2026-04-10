@@ -6,6 +6,7 @@ const chatController = require('../controllers/chatController');
 // Require authentication for all chat routes
 router.use(authMiddleware.protect);
 
+
 // POST /api/chat/conversation - Get or create conversation
 router.post('/conversation', chatController.getOrCreateConversation);
 

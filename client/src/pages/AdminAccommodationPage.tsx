@@ -12,6 +12,9 @@ const FACILITY_ICONS: Record<string, string> = {
   Furnished: "🛋️", "Water Included": "💧", "Electricity Included": "⚡",
 };
 
+const toUrl = (base: string, path: string) =>
+  `${base}/${path.replace(/\\/g, '/').replace(/^\//, '')}`;
+
 export default function AdminAccommodationPage() {
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "null");
@@ -65,37 +68,7 @@ export default function AdminAccommodationPage() {
       });
       console.log('Conversations response:', data);
       const realConversations = Array.isArray(data) ? data : data.data ?? [];
-
-      // If no real conversations, show instructions for admin
-      if (realConversations.length === 0 && user?.role?.toLowerCase() === 'admin') {
-        const instructionConversations = [
-          {
-            _id: 'instruction-1',
-            accommodationId: { title: '🏠 Step 1: Create Accommodation' },
-            studentId: { name: 'System Guide', _id: 'system-1' },
-            ownerId: { _id: myId },
-            lastMessage: 'Create an accommodation listing to receive student messages',
-            ownerUnread: 0,
-            studentUnread: 0,
-            lastMessageAt: new Date(),
-            isInstruction: true
-          },
-          {
-            _id: 'instruction-2',
-            accommodationId: { title: '💬 Step 2: Test with Student Account' },
-            studentId: { name: 'Testing Guide', _id: 'system-2' },
-            ownerId: { _id: myId },
-            lastMessage: 'Use a student account to send test messages',
-            ownerUnread: 0,
-            studentUnread: 0,
-            lastMessageAt: new Date(Date.now() - 60000),
-            isInstruction: true
-          }
-        ];
-        setConversations(instructionConversations);
-      } else {
-        setConversations(realConversations);
-      }
+      setConversations(realConversations);
     } catch (err: any) {
       console.error("fetchConversations error:", err.response?.data || err.message);
       setConversations([]);
@@ -131,45 +104,6 @@ export default function AdminAccommodationPage() {
     setActiveConv(conv);
     activeConvRef.current = conv;
 
-    // Handle instruction conversations
-    if (conv.isInstruction) {
-      const instructionMessages = [
-        {
-          _id: 'instruction-msg-1',
-          conversationId: conv._id,
-          senderId: { _id: 'system', name: 'System Guide' },
-          message: conv._id === 'instruction-1'
-            ? 'To receive messages from students:\n\n1. Go to the "Listings" tab\n2. Click "Inject New Record"\n3. Fill in accommodation details\n4. Publish your listing\n\nStudents will then be able to message you about your accommodation!'
-            : 'To test messaging:\n\n1. Create accommodation listing first\n2. Register a new student account or use existing one\n3. Log in with student account\n4. Find your accommodation listing and click "Message Owner"\n5. Send a test message\n6. Log back in as admin to see the message here!',
-          createdAt: new Date().toISOString()
-        }
-      ];
-      setMessages(instructionMessages);
-      return;
-    }
-
-    // Handle demo conversations
-    if (conv._id.startsWith('demo-')) {
-      const demoMessages = [
-        {
-          _id: 'demo-msg-1',
-          conversationId: conv._id,
-          senderId: { _id: conv.studentId._id, name: conv.studentId.name },
-          message: conv.lastMessage,
-          createdAt: new Date(conv.lastMessageAt).toISOString()
-        },
-        {
-          _id: 'demo-msg-2',
-          conversationId: conv._id,
-          senderId: { _id: myId, name: user?.name || 'Admin' },
-          message: 'Yes, this accommodation is still available. Would you like to schedule a viewing?',
-          createdAt: new Date(conv.lastMessageAt.getTime() + 300000).toISOString() // 5 min later
-        }
-      ];
-      setMessages(demoMessages);
-      return;
-    }
-
     socketRef.current?.emit("join_conversation", conv._id);
     try {
       const { data } = await axios.get(`${API}/api/chat/${conv._id}/messages`, {
@@ -191,25 +125,6 @@ export default function AdminAccommodationPage() {
 
   const sendMessage = () => {
     if (!msgInput.trim() || !activeConv) return;
-
-    // Handle instruction conversations - don't send messages
-    if (activeConv.isInstruction) {
-      return;
-    }
-
-    // Handle demo conversations - just add to local state
-    if (activeConv._id.startsWith('demo-')) {
-      const tempMsg = {
-        _id: Date.now().toString(),
-        conversationId: activeConv._id,
-        senderId: { _id: myId, name: user?.name || 'Admin' },
-        message: msgInput.trim(),
-        createdAt: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, tempMsg]);
-      setMsgInput("");
-      return;
-    }
 
     const tempMsg = {
       _id: Date.now().toString(),
@@ -356,7 +271,7 @@ export default function AdminAccommodationPage() {
                   <div className="flex items-center gap-4">
                     <div className="w-20 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-[#0d1117]">
                       {item.photos?.[0] ? (
-                        <img src={`${API}${item.photos[0]}`} alt={item.title} className="w-full h-full object-cover" />
+                        <img src={toUrl(API, item.photos[0])} alt={item.title} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-slate-600 text-xl">🏠</div>
                       )}
@@ -441,12 +356,6 @@ export default function AdminAccommodationPage() {
                   </div>
                 ) : (
                   <>
-                    {conversations.some(c => c.isInstruction) && (
-                      <div className="p-4 mb-2 bg-amber-900/20 border border-amber-700/30 rounded-lg">
-                        <p className="text-amber-300 text-sm font-medium">📋 Setup Instructions</p>
-                        <p className="text-amber-400 text-xs mt-1">Follow these steps to receive real student messages in your admin account.</p>
-                      </div>
-                    )}
                     {conversations.map((conv) => {
                       const student = conv.studentId;
                       const unread = conv.ownerUnread || 0;

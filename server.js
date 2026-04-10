@@ -37,6 +37,7 @@ app.use('/api/notifications', require('./routes/notifications'));
 app.use("/api/time", require("./routes/timeManagement"));
 app.use("/api/ai", require("./routes/aiChat"));
 
+
 connectDB();
 
 setupChatSocket(io);

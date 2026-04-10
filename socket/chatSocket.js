@@ -27,10 +27,10 @@ module.exports = (io) => {
             ...(isStudent ? { ownerUnread: (conv.ownerUnread || 0) + 1 } : { studentUnread: (conv.studentUnread || 0) + 1 })
           });
 
-          // Room එකට මැසේජ් එක යැවීම
+          
           io.to(conversationId).emit('receive_message', populated);
 
-          // අනෙක් අයට Notification යැවීම
+        
           const otherUserId = isStudent ? conv.ownerId.toString() : conv.studentId.toString();
           io.to(`user_${otherUserId}`).emit('new_message_notification', {
             conversationId, message, senderId
