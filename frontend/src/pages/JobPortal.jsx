@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { PartTimeJobs } from '../components/dashboard/PartTimeJobs';
 
 const JobPortal = () => {
   const navigate = useNavigate();
@@ -11,13 +12,13 @@ const JobPortal = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('All');
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState('');
   const [targetRole, setTargetRole] = useState('');
   const [aiResult, setAiResult] = useState(null);
   const [isGeneratingLetter, setIsGeneratingLetter] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
+  const [activeTab, setActiveTab] = useState('Internships');
 
   // Hardcoded for the presentation demo
   const currentUserId = 'IT23328020';
@@ -62,13 +63,24 @@ const JobPortal = () => {
     return { score, matchedSkills };
   };
 
-  const filteredJobs = jobs.filter((job) => {
-    const matchesSearch =
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'All' || job.jobType === filterType;
-    return matchesSearch && matchesType;
-  });
+  const categoryFilteredJobs = useMemo(() => {
+    if (activeTab === 'Part-Time Jobs') return [];
+    if (activeTab === 'Internships') {
+      return jobs.filter((job) => job.jobType === 'Internship');
+    }
+    return jobs.filter((job) => job.jobType === 'Job');
+  }, [jobs, activeTab]);
+
+  const filteredJobs = useMemo(() => {
+    const q = searchTerm.toLowerCase().trim();
+    return categoryFilteredJobs.filter((job) => {
+      if (!q) return true;
+      return (
+        job.title.toLowerCase().includes(q) ||
+        job.company.toLowerCase().includes(q)
+      );
+    });
+  }, [categoryFilteredJobs, searchTerm]);
 
   // Sort jobs so the highest ATS matches appear at the TOP of the feed!
   const sortedAndFilteredJobs = [...filteredJobs].sort((a, b) => {
@@ -170,11 +182,18 @@ const JobPortal = () => {
     setAiLoading(true);
     setAiError('');
     try {
+      const jobsForAssist =
+        activeTab === 'Jobs'
+          ? jobs.filter((j) => j.jobType === 'Job')
+          : activeTab === 'Internships'
+            ? jobs.filter((j) => j.jobType === 'Internship')
+            : jobs;
+
       const response = await fetch('http://localhost:5000/api/jobs/ai-assist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          jobs: jobs.map((j) => ({
+          jobs: jobsForAssist.map((j) => ({
             _id: j._id,
             title: j.title,
             company: j.company,
@@ -251,49 +270,62 @@ const JobPortal = () => {
       </nav>
 
       <main className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h2 className="text-4xl font-extrabold text-slate-900 mb-2 tracking-tight">Discover Opportunities</h2>
-            <p className="text-slate-500 font-medium text-lg">
-              {userProfile
-                ? 'Your ATS engine is actively scanning for matches.'
-                : 'Set up your ATS profile to unlock AI matching.'}
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Career opportunities</h1>
+            <p className="text-slate-500 mt-1 text-sm sm:text-base">
+              {activeTab === 'Internships' &&
+                (userProfile
+                  ? 'Your ATS engine is actively finding your best internship matches.'
+                  : 'Set up your ATS profile to unlock AI matching.')}
+              {activeTab === 'Jobs' &&
+                (userProfile
+                  ? 'Full-time and graduate roles—ranked with the same ATS engine.'
+                  : 'Browse job postings and enable your profile for smarter matching.')}
+              {activeTab === 'Part-Time Jobs' &&
+                'Flexible part-time roles—separate from the main ATS internship and job feeds.'}
             </p>
           </div>
-          <div className="bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200 flex items-center space-x-2">
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
-            </span>
-            <span className="text-sm font-bold text-slate-700">{filteredJobs.length} Active Postings</span>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-10 flex flex-col md:flex-row gap-4 items-center">
-          <div className="relative flex-grow w-full">
-            <input
-              type="text"
-              placeholder="Search by role or company..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-4 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium"
-            />
-          </div>
-          <div className="flex space-x-2 w-full md:w-auto overflow-x-auto">
-            {['All', 'Job', 'Internship'].map((type) => (
+          <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner w-full md:w-auto gap-0.5">
+            {['Internships', 'Jobs', 'Part-Time Jobs'].map((tab) => (
               <button
-                key={type}
-                onClick={() => setFilterType(type)}
-                className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                  filterType === type
-                    ? 'bg-slate-800 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 md:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 whitespace-nowrap ${
+                  activeTab === tab
+                    ? 'bg-white text-blue-600 shadow-sm border border-slate-200/50'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
                 }`}
               >
-                {type === 'All' ? 'All Roles' : `${type}s`}
+                {tab}
               </button>
             ))}
           </div>
+        </div>
+
+        {activeTab !== 'Part-Time Jobs' && (
+          <div className="mb-8">
+            <div className="bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200 inline-flex items-center space-x-2">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+              </span>
+              <span className="text-sm font-bold text-slate-700">{filteredJobs.length} active postings</span>
+            </div>
+          </div>
+        )}
+
+        {activeTab !== 'Part-Time Jobs' ? (
+          <>
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-10">
+          <input
+            type="search"
+            placeholder="Search by role or company..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-4 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium"
+          />
         </div>
 
         <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-8">
@@ -307,7 +339,11 @@ const JobPortal = () => {
                 type="text"
                 value={targetRole}
                 onChange={(e) => setTargetRole(e.target.value)}
-                placeholder="Target role (e.g., Frontend Intern)"
+                placeholder={
+                  activeTab === 'Jobs'
+                    ? 'Target role (e.g., Software Engineer)'
+                    : 'Target role (e.g., Frontend Intern)'
+                }
                 className="w-full md:w-72 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
               />
               <button
@@ -422,6 +458,12 @@ const JobPortal = () => {
             })
           )}
         </div>
+          </>
+        ) : (
+          <div>
+            <PartTimeJobs />
+          </div>
+        )}
       </main>
 
       {/* Premium Application Modal */}

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
+const isAcceptedStatus = (status) => status === 'Shortlisted' || status === 'Approved';
+
 const ApplicationTracker = () => {
   const [applications, setApplications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -104,7 +106,7 @@ const ApplicationTracker = () => {
                     className={`absolute top-1/2 left-4 h-1 -translate-y-1/2 rounded-full z-0 transition-all duration-1000 ${
                       app.status === 'Pending'
                         ? 'w-1/2 bg-yellow-400'
-                        : app.status === 'Shortlisted'
+                        : isAcceptedStatus(app.status)
                           ? 'w-[calc(100%-2rem)] bg-emerald-500'
                           : 'w-[calc(100%-2rem)] bg-red-500'
                     }`}
@@ -143,26 +145,28 @@ const ApplicationTracker = () => {
                     <div className="flex flex-col items-center">
                       <div
                         className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-md ${
-                          app.status === 'Shortlisted'
+                          isAcceptedStatus(app.status)
                             ? 'bg-emerald-500 text-white shadow-emerald-200'
                             : app.status === 'Rejected'
                               ? 'bg-red-500 text-white shadow-red-200'
                               : 'bg-white border-2 border-slate-200 text-slate-300'
                         }`}
                       >
-                        {app.status === 'Shortlisted' ? '🎉' : app.status === 'Rejected' ? '✖' : '🔒'}
+                        {isAcceptedStatus(app.status) ? '🎉' : app.status === 'Rejected' ? '✖' : '🔒'}
                       </div>
                       <span
                         className={`text-[10px] font-bold mt-2 uppercase ${
-                          app.status === 'Shortlisted'
+                          isAcceptedStatus(app.status)
                             ? 'text-emerald-600'
                             : app.status === 'Rejected'
                               ? 'text-red-600'
                               : 'text-slate-400'
                         }`}
                       >
-                        {app.status === 'Shortlisted'
-                          ? 'Shortlisted'
+                        {isAcceptedStatus(app.status)
+                          ? app.status === 'Approved'
+                            ? 'Approved'
+                            : 'Shortlisted'
                           : app.status === 'Rejected'
                             ? 'Rejected'
                             : 'Decision'}
@@ -176,18 +180,18 @@ const ApplicationTracker = () => {
                   className={`mt-6 p-4 rounded-xl text-sm border ${
                     app.status === 'Pending'
                       ? 'bg-yellow-50 border-yellow-100 text-yellow-800'
-                      : app.status === 'Shortlisted'
+                      : isAcceptedStatus(app.status)
                         ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
                         : 'bg-red-50 border-red-100 text-red-800'
                   }`}
                 >
                   {app.status === 'Pending' && <strong>Under Review:</strong>}
-                  {app.status === 'Shortlisted' && <strong>Congratulations!</strong>}
+                  {isAcceptedStatus(app.status) && <strong>Congratulations!</strong>}
                   {app.status === 'Rejected' && <strong>Update:</strong>}
                   <span className="ml-1">
                     {app.status === 'Pending'
                       ? 'The employer is currently reviewing your CV. Keep an eye on your SLIIT inbox.'
-                      : app.status === 'Shortlisted'
+                      : isAcceptedStatus(app.status)
                         ? 'You have been selected for the next phase! Check your student email for interview details.'
                         : 'Unfortunately, the employer has moved forward with other candidates. Keep applying!'}
                   </span>
