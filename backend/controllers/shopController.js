@@ -53,10 +53,6 @@ const getShopById = async (req, res) => {
 // Create new shop request (FIXED VERSION)
 const createShop = async (req, res) => {
   try {
-    console.log('=== CREATE SHOP REQUEST ===');
-    console.log('Request body:', req.body);
-    console.log('Request file:', req.file);
-    
     // Extract fields from req.body (multer populates this for non-file fields)
     const {
       shopName,
@@ -137,14 +133,10 @@ const createShop = async (req, res) => {
       rating: 5.0,
       reviews: 0
     };
-    
-    console.log('Creating shop with data:', shopData);
-    
+
     const shop = new Shop(shopData);
     await shop.save();
-    
-    console.log('Shop created successfully:', shop._id);
-    
+
     res.status(201).json({ 
       success: true, 
       data: shop, 
@@ -158,7 +150,6 @@ const createShop = async (req, res) => {
       const imagePath = path.join(__dirname, '..', 'uploads', req.file.filename);
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
-        console.log('Deleted uploaded file due to error:', imagePath);
       }
     }
     
@@ -212,9 +203,7 @@ const approveShop = async (req, res) => {
     shop.status = 'approved';
     shop.approvedDate = new Date();
     await shop.save();
-    
-    console.log(`Shop approved: ${shop._id} - ${shop.shopName}`);
-    
+
     res.status(200).json({ 
       success: true, 
       data: shop, 
@@ -236,9 +225,7 @@ const rejectShop = async (req, res) => {
     
     shop.status = 'rejected';
     await shop.save();
-    
-    console.log(`Shop rejected: ${shop._id} - ${shop.shopName}`);
-    
+
     res.status(200).json({ 
       success: true, 
       message: 'Shop rejected successfully' 
@@ -262,14 +249,11 @@ const deleteShop = async (req, res) => {
       const imagePath = path.join(__dirname, '..', shop.image);
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
-        console.log('Deleted shop image:', imagePath);
       }
     }
     
     await shop.deleteOne();
-    
-    console.log(`Shop deleted: ${shop._id} - ${shop.shopName}`);
-    
+
     res.status(200).json({ 
       success: true, 
       message: 'Shop deleted successfully' 
@@ -304,9 +288,7 @@ const updateShopRating = async (req, res) => {
     shop.rating = parseFloat(newRating.toFixed(1));
     shop.reviews = newReviews;
     await shop.save();
-    
-    console.log(`Shop rating updated: ${shop._id} - New rating: ${shop.rating} (${shop.reviews} reviews)`);
-    
+
     res.status(200).json({ 
       success: true, 
       rating: shop.rating, 

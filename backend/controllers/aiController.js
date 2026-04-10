@@ -19,8 +19,6 @@ exports.chatCounselor = async (req, res) => {
   const { message, activeJobs } = req.body || {};
 
   try {
-    console.log('Checkpoint 1: AI Chat request received.');
-
     if (!process.env.GEMINI_API_KEY) {
       throw new Error('API Key missing');
     }
@@ -29,7 +27,6 @@ exports.chatCounselor = async (req, res) => {
     const systemInstruction = `You are the CampusConnect AI Career Counselor. Be friendly, encouraging, and brief (under 3 sentences). Here are the live jobs currently in our database: ${JSON.stringify(jobsContext)}. If the user asks for a job, recommend 1 or 2 specific roles from this list that match their request.`;
     const prompt = `${systemInstruction}\n\nStudent: ${message || ''}`;
 
-    console.log('Checkpoint 2: Asking Gemini...');
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
@@ -48,10 +45,9 @@ exports.chatCounselor = async (req, res) => {
       throw new Error(data?.error?.message || 'Gemini did not return a reply');
     }
 
-    console.log('Checkpoint 3: Success! Sending real AI response.');
     return res.json({ reply });
   } catch (error) {
-    console.log('QUOTA/NETWORK ERROR DETECTED: Falling back to Presentation Mode...');
+    console.warn('[ai] Gemini unavailable, using presentation fallback:', error.message);
 
     setTimeout(() => {
       const msg = (message || '').toLowerCase();

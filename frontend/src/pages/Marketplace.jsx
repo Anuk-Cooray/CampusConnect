@@ -216,8 +216,7 @@ const App = () => {
     try {
       const response = await fetch(`${API_BASE_URL}/items/approved`);
       const data = await response.json();
-      console.log('Items API Response:', data);
-      
+
       if (data.success) {
         // Show ALL approved items (don't filter by current user)
         // This allows students to see all items including their own
@@ -248,8 +247,7 @@ const App = () => {
     try {
       const response = await fetch(`${API_BASE_URL}/shops/approved`);
       const data = await response.json();
-      console.log('Shops API Response:', data);
-      
+
       if (data.success) {
         // Show ALL approved shops
         const allShops = data.data;

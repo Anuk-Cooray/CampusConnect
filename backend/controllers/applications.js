@@ -24,8 +24,6 @@ exports.updateApplicationStatus = async (req, res) => {
       return res.status(404).json({ message: 'Application not found.' });
     }
 
-    console.log(`Application ${id} marked as ${status}`);
-
     res.json({
       message: `CV successfully ${status.toLowerCase()}`,
       id: updatedApplication._id,

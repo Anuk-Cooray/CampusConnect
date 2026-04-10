@@ -41,7 +41,6 @@ exports.getOrCreateConversation = async (req, res) => {
 exports.getUserConversations = async (req, res) => {
   try {
     const userId = req.user._id;
-    console.log('getUserConversations - userId:', userId.toString());
 
     const convs = await Conversation.find({
       $or: [{ studentId: userId }, { ownerId: userId }]
@@ -51,7 +50,6 @@ exports.getUserConversations = async (req, res) => {
       .populate('ownerId', 'name email')
       .sort({ lastMessageAt: -1 });
 
-    console.log('conversations found:', convs.length);
     res.json({ success: true, data: convs });
   } catch (err) {
     console.error('getUserConversations error:', err.message);

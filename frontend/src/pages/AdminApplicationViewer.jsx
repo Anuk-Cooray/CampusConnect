@@ -69,6 +69,7 @@ const DEFAULT_PART_TIME = [
   },
 ];
 
+/** Derives a coarse job family from role title + skills (API jobs only have a title; mocks may set `category` explicitly). */
 function inferJobCategory(role, skills = '') {
   const r = `${role || ''} ${skills || ''}`.toLowerCase();
   if (/\b(ui\/ux|ux designer|ui designer|figma|user experience|user interface)\b/.test(r)) return 'UI/UX';
@@ -138,6 +139,7 @@ function parseVivaFromStorage() {
       atsScore: typeof v.atsScore === 'number' ? v.atsScore : 82,
       status: v.status || 'Pending',
       skills: v.skills || '',
+      category: v.category || inferJobCategory(v.role, v.skills),
       _source: 'viva',
       _vivaNumericId: v.id,
     }));
@@ -193,6 +195,7 @@ export default function AdminApplicationViewer() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [search, setSearch] = useState('');
 
+  /** Merges demo rows, Mongo internship applications, and `localStorage` part-time applies into one list. */
   const loadMergedApplications = useCallback(async () => {
     setIsLoading(true);
     let apiRows = [];
@@ -207,7 +210,10 @@ export default function AdminApplicationViewer() {
     }
 
     const vivaRows = parseVivaFromStorage();
-    setApplications([...DEFAULT_INTERNSHIPS, ...apiRows, ...DEFAULT_PART_TIME, ...vivaRows]);
+    const merged = [...DEFAULT_INTERNSHIPS, ...apiRows, ...DEFAULT_PART_TIME, ...vivaRows].map(
+      withResolvedCategory,
+    );
+    setApplications(merged);
     setIsLoading(false);
   }, []);
 
@@ -274,6 +280,7 @@ export default function AdminApplicationViewer() {
     );
   };
 
+  /** Queue (internship vs part-time) → status tab → optional job category → text search. */
   const filteredApps = useMemo(() => {
     return applications.filter((app) => {
       const matchesJobType =
@@ -301,6 +308,7 @@ export default function AdminApplicationViewer() {
     });
   }, [applications, jobTypeFilter, categoryFilter, statusFilter, search]);
 
+  /** Groups the visible rows by employer so the admin sees one card stack per company. */
   const groupedApplications = useMemo(() => {
     const acc = filteredApps.reduce((groups, app) => {
       const key = app.company || 'Unknown company';
