@@ -5,6 +5,8 @@ const path = require('path');
 const connectDB = require('./config/db');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
+const aiChatRoutes = require("./routes/aiChat");
+const setupChatSocket = require('./socket/chatSocket');
 
 dotenv.config();
 
@@ -33,7 +35,11 @@ app.use('/api/chat', require('./routes/chat'));
 app.use('/api/profiles', require('./routes/profiles'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use("/api/time", require("./routes/timeManagement"));
+app.use("/api/ai", require("./routes/aiChat"));
+
 connectDB();
+
+setupChatSocket(io);
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);

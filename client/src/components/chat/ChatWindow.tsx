@@ -15,6 +15,7 @@ export default function ChatWindow({ accommodationId, onClose }: Props) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [typing, setTyping] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const token = localStorage.getItem("token");
@@ -23,6 +24,24 @@ export default function ChatWindow({ accommodationId, onClose }: Props) {
 
   useEffect(() => {
     const init = async () => {
+      if (!accommodationId) {
+        setError("Missing accommodation ID for chat.");
+        setLoading(false);
+        return;
+      }
+
+      if (!token) {
+        setError("Missing authentication token. Please login again.");
+        setLoading(false);
+        return;
+      }
+
+      if (!myId) {
+        setError("Unable to determine current user. Please login again.");
+        setLoading(false);
+        return;
+      }
+
       try {
         // Get or create conversation
         const { data: convData } = await axios.post(
@@ -49,6 +68,11 @@ export default function ChatWindow({ accommodationId, onClose }: Props) {
         const socket = io(API, { auth: { token } });
         socketRef.current = socket;
 
+        socket.on("connect_error", (socketError) => {
+          console.error("Socket connect error:", socketError);
+          setError("Chat socket connection failed. Please refresh the page.");
+        });
+
         socket.emit("user_online", myId);
         socket.emit("join_conversation", conv._id);
 
@@ -60,8 +84,9 @@ export default function ChatWindow({ accommodationId, onClose }: Props) {
 
         socket.on("user_typing", () => setTyping(true));
         socket.on("user_stop_typing", () => setTyping(false));
-      } catch (err) {
+      } catch (err: any) {
         console.error("ChatWindow init error:", err);
+        setError(err?.response?.data?.message || err.message || "Failed to initialize chat.");
       } finally {
         setLoading(false);
       }
@@ -102,6 +127,23 @@ export default function ChatWindow({ accommodationId, onClose }: Props) {
       socketRef.current?.emit("stop_typing", { conversationId: conversation?._id, userId: myId });
     }, 1500);
   };
+
+  if (error) {
+    return (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
+        <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl border border-red-200">
+          <h3 className="text-lg font-semibold text-red-700 mb-2">Chat Error</h3>
+          <p className="text-sm text-slate-600 mb-4">{error}</p>
+          <button
+            onClick={onClose}
+            className="w-full bg-red-600 hover:bg-red-700 text-white rounded-xl px-4 py-2 text-sm font-semibold"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">

@@ -29,6 +29,8 @@ const Login = () => {
 
       // Store tokens and user details
       localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('userId', data.user._id || data.user.id);
       localStorage.setItem('userName', data.user.name);
       
       // FIX: force lowercase so "Admin" or "admin" both work

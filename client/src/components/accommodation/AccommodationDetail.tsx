@@ -184,7 +184,7 @@ function AccommodationDetail() {
 
               {showChat && (
                 <ChatWindow
-                  accommodationId={acc._id}
+                  accommodationId={acc._id || acc.id || id}
                   onClose={() => setShowChat(false)}
                 />
               )}

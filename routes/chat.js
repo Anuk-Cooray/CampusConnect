@@ -1,17 +1,21 @@
 const express = require('express');
 const router = express.Router();
+const authMiddleware = require('../middleware/authMiddleware');
+const chatController = require('../controllers/chatController');
 
-// Basic stub routes to avoid 404s until chat backend is implemented
-router.get('/conversations', async (req, res) => {
-  res.json({ success: true, data: [] });
-});
+// Require authentication for all chat routes
+router.use(authMiddleware.protect);
 
-router.get('/:conversationId/messages', async (req, res) => {
-  res.json({ success: true, data: [] });
-});
+// POST /api/chat/conversation - Get or create conversation
+router.post('/conversation', chatController.getOrCreateConversation);
 
-router.put('/:conversationId/read', async (req, res) => {
-  res.json({ success: true });
-});
+// GET /api/chat/conversations - Get all conversations for user
+router.get('/conversations', chatController.getUserConversations);
+
+// GET /api/chat/:conversationId/messages - Get messages for conversation
+router.get('/:conversationId/messages', chatController.getMessages);
+
+// PUT /api/chat/:conversationId/read - Mark conversation as read
+router.put('/:conversationId/read', chatController.markAsRead);
 
 module.exports = router;

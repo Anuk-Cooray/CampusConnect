@@ -69,9 +69,9 @@ exports.createAccommodation = async (req, res) => {
         name: ownerName,
         phone: ownerPhone,
         email: ownerEmail,
-        userId: ownerUserId || req.user._id   // ← Fix: fallback to admin
+        userId: ownerUserId || req.user.id   // ← Fix: fallback to admin
       },
-      createdBy: req.user._id
+      createdBy: req.user.id
     });
 
     res.status(201).json({ success: true, data: acc });
@@ -116,7 +116,7 @@ exports.updateAccommodation = async (req, res) => {
         name: updateData.ownerName,
         phone: updateData.ownerPhone,
         email: updateData.ownerEmail,
-        userId: updateData.ownerUserId || acc.owner.userId || req.user._id  // ← Fix
+        userId: updateData.ownerUserId || acc.owner.userId || req.user.id  // ← Fix
       };
     }
 

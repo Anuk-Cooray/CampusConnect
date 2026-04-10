@@ -5,7 +5,12 @@ import axios from "axios";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-export default function AccommodationList() {
+// Interface එකක් add කළා aiFilters receive කරන්න
+interface AccommodationListProps {
+  aiFilters?: any;
+}
+
+export default function AccommodationList({ aiFilters }: AccommodationListProps) {
   const [accommodations, setAccommodations] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -15,11 +20,20 @@ export default function AccommodationList() {
     setError("");
     try {
       const params = new URLSearchParams();
+      
+      // AI එකෙන් එවන filter fields මෙතනදී add වෙනවා
       if (filters.minPrice) params.append("minPrice", filters.minPrice);
       if (filters.maxPrice) params.append("maxPrice", filters.maxPrice);
       if (filters.maxDistance) params.append("maxDistance", filters.maxDistance);
       if (filters.gender) params.append("gender", filters.gender);
-      if (filters.facilities?.length) params.append("facilities", filters.facilities.join(","));
+      
+      // AI එකෙන් string එකක් ආවොත් ඒක array එකක් කරලා යවනවා
+      if (filters.facilities) {
+        const facs = Array.isArray(filters.facilities) 
+          ? filters.facilities 
+          : filters.facilities.split(",");
+        params.append("facilities", facs.join(","));
+      }
 
       const { data } = await axios.get(`${API}/api/accommodations?${params}`);
       setAccommodations(Array.isArray(data) ? data : data.data ?? data.accommodations ?? []);
@@ -31,12 +45,25 @@ export default function AccommodationList() {
     }
   }, []);
 
-  useEffect(() => { fetchAccommodations(); }, [fetchAccommodations]);
+  // 1. සාමාන්‍ය විදිහට මුලින්ම load වෙනකොට
+  useEffect(() => { 
+    if (!aiFilters) {
+      fetchAccommodations(); 
+    }
+  }, [fetchAccommodations]);
+
+  // 2. AI Bot එකෙන් අලුත් filters ලැබෙන හැම වෙලාවකම automatic fetch වෙනවා
+  useEffect(() => {
+    if (aiFilters) {
+      fetchAccommodations(aiFilters);
+    }
+  }, [aiFilters, fetchAccommodations]);
 
   return (
     <div className="h-[85vh] overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 py-6 h-full overflow-y-auto">
 
+        {/* Filter Bar එකට aiFilters එකත් pass කරන්න පුළුවන් UI එක update වෙන්න අවශ්‍ය නම් */}
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 mb-6">
           <FilterBar onFilter={fetchAccommodations} loading={loading} />
         </div>
@@ -64,13 +91,20 @@ export default function AccommodationList() {
           <div className="text-center py-20">
             <p className="text-5xl mb-4">🏠</p>
             <p className="text-slate-500 text-lg font-medium">No accommodations found</p>
-            <p className="text-slate-400 text-sm mt-1">Try adjusting your filters</p>
+            <p className="text-slate-400 text-sm mt-1">Try adjusting your filters or ask the AI Bot!</p>
           </div>
         ) : (
           <>
-            <p className="text-sm text-slate-500 mb-4">
-              {accommodations.length} accommodation{accommodations.length !== 1 ? "s" : ""} found
-            </p>
+            <div className="flex justify-between items-center mb-4">
+               <p className="text-sm text-slate-500">
+                {accommodations.length} accommodation{accommodations.length !== 1 ? "s" : ""} found
+              </p>
+              {aiFilters && (
+                <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full animate-bounce">
+                  AI Filter Applied ✨
+                </span>
+              )}
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {accommodations.map((a: any) => (
                 <AccommodationCard key={a._id} accommodation={a} />

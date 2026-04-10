@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const Accommodation = require('../models/Accommodation');
+const authMiddleware = require('../middleware/authMiddleware');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -24,7 +25,7 @@ router.get('/', async (req, res) => {
 });
 
 // @route   POST /api/accommodation (Student OR Admin)
-router.post('/', uploads.array('photos', 5), async (req, res) => {
+router.post('/', authMiddleware.protect, uploads.array('photos', 5), async (req, res) => {
   try {
     const {
       title,
@@ -80,11 +81,12 @@ router.post('/', uploads.array('photos', 5), async (req, res) => {
         name: ownerName,
         phone: ownerPhone,
         email: ownerEmail,
+        userId: req.user?.id || null,
       },
       gender,
       availableRooms: roomsNum,
       isAvailable: roomsNum > 0,
-      createdBy: null,
+      createdBy: req.user?.id || null,
     });
     await newPlace.save();
     res.status(201).json(newPlace);
