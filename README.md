@@ -12,3 +12,16 @@ Full-stack campus platform for student life: placements, marketplace, accommodat
 - **Accommodations & chat** — Listings and messaging between students and owners.
 - **Time management** — Assignments, study sessions, and exams scoped to the logged-in user.
 - **Q&A forum** — Category-tagged questions for peer support.
+
+## Tech stack
+
+| Layer | Technologies |
+|--------|----------------|
+| **Frontend** | React 18, Vite 7, React Router 7, Tailwind CSS, Framer Motion, Lucide React, Socket.io client, Axios |
+| **Backend** | Node.js, Express, MongoDB (Mongoose), CORS, Multer (file uploads) |
+| **AI** | Google Gemini API (`GEMINI_API_KEY`) for the career counselor |
+
+## Repository layout
+
+- `frontend/` — Vite + React SPA (`npm run dev`, `npm run build`).
+- `backend/` — Express API (`server.js`), controllers, Mongoose models, and `uploads/` for user files (keep this directory out of version control for production data).
