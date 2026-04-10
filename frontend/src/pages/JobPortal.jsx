@@ -12,6 +12,12 @@ const JobPortal = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('All');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
+  const [targetRole, setTargetRole] = useState('');
+  const [aiResult, setAiResult] = useState(null);
+  const [isGeneratingLetter, setIsGeneratingLetter] = useState(false);
+  const [coverLetter, setCoverLetter] = useState('');
 
   // Hardcoded for the presentation demo
   const currentUserId = 'IT23328020';
@@ -74,6 +80,7 @@ const JobPortal = () => {
   const handleApplyClick = (job) => {
     setSelectedJob(job);
     setIsModalOpen(true);
+    setCoverLetter('');
   };
 
   const submitApplication = async (e) => {
@@ -125,6 +132,69 @@ const JobPortal = () => {
     localStorage.removeItem('userName');
     localStorage.removeItem('userRole');
     navigate('/login');
+  };
+
+  const handleGenerateCoverLetter = async (job) => {
+    if (!job) return;
+    setIsGeneratingLetter(true);
+    try {
+      const studentName = localStorage.getItem('userName') || 'IT Undergraduate';
+      const payload = {
+        studentName,
+        major: userProfile?.degree || userProfile?.major || 'Information Technology',
+        skills: Array.isArray(userProfile?.skills) && userProfile.skills.length
+          ? userProfile.skills.join(', ')
+          : 'React, Node.js, Express, MongoDB, UI/UX Design',
+        jobTitle: job.title,
+        company: job.company,
+      };
+
+      const response = await fetch('http://localhost:5000/api/ai/cover-letter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'AI generation failed');
+      setCoverLetter(data.coverLetter || '');
+    } catch (error) {
+      console.error('AI Generation failed:', error);
+      setCoverLetter(error.message || 'Failed to connect to the AI. Please try again.');
+    } finally {
+      setIsGeneratingLetter(false);
+    }
+  };
+
+  const runAiAssist = async () => {
+    setAiLoading(true);
+    setAiError('');
+    try {
+      const response = await fetch('http://localhost:5000/api/jobs/ai-assist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobs: jobs.map((j) => ({
+            _id: j._id,
+            title: j.title,
+            company: j.company,
+            description: j.description,
+            jobType: j.jobType,
+          })),
+          profile: userProfile || {},
+          targetRole,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to generate AI suggestions');
+      setAiResult(data);
+    } catch (err) {
+      setAiError(err.message);
+      setAiResult(null);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   return (
@@ -224,6 +294,62 @@ const JobPortal = () => {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-8">
+          <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">AI Job Assistant</h3>
+              <p className="text-sm text-slate-500">Get top matches and profile improvement tips with Gemini.</p>
+            </div>
+            <div className="w-full md:w-auto flex gap-2">
+              <input
+                type="text"
+                value={targetRole}
+                onChange={(e) => setTargetRole(e.target.value)}
+                placeholder="Target role (e.g., Frontend Intern)"
+                className="w-full md:w-72 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+              />
+              <button
+                onClick={runAiAssist}
+                disabled={aiLoading}
+                className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-60"
+              >
+                {aiLoading ? 'Analyzing...' : 'Run AI'}
+              </button>
+            </div>
+          </div>
+
+          {aiError && <p className="mt-3 text-sm text-red-600">{aiError}</p>}
+
+          {aiResult && (
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              <div className="bg-slate-50 rounded-xl p-3 border border-slate-200">
+                <p className="text-sm font-bold text-slate-800 mb-2">Top Matches</p>
+                <ul className="space-y-1 text-xs text-slate-700">
+                  {(aiResult.topMatches || []).slice(0, 5).map((m, i) => (
+                    <li key={i}>#{i + 1} Score {m.score}% - {m.reason}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3 border border-slate-200">
+                <p className="text-sm font-bold text-slate-800 mb-2">Profile Improvements</p>
+                <ul className="space-y-1 text-xs text-slate-700">
+                  {(aiResult.profileImprovements || []).slice(0, 5).map((tip, i) => (
+                    <li key={i}>- {tip}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3 border border-slate-200">
+                <p className="text-sm font-bold text-slate-800 mb-2">Resume Bullet Ideas</p>
+                <ul className="space-y-1 text-xs text-slate-700">
+                  {(aiResult.resumeBulletIdeas || []).slice(0, 5).map((tip, i) => (
+                    <li key={i}>- {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Job Listings Grid */}
@@ -328,6 +454,32 @@ const JobPortal = () => {
                   />
                 </div>
               )}
+
+              <div className="mt-6 border-t border-slate-100 pt-6">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-bold text-slate-700">Cover Letter</label>
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateCoverLetter(selectedJob)}
+                    disabled={isGeneratingLetter}
+                    className="text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-1.5 px-3 rounded-lg border border-indigo-200 transition-colors flex items-center space-x-1"
+                  >
+                    {isGeneratingLetter ? (
+                      <span className="animate-pulse">✨ Generating...</span>
+                    ) : (
+                      <span>✨ Auto-Generate with AI</span>
+                    )}
+                  </button>
+                </div>
+
+                <textarea
+                  rows="6"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all font-medium text-sm text-slate-700 placeholder-slate-400"
+                  placeholder="Write your cover letter here, or click the AI button above to generate a highly personalized one instantly..."
+                  value={coverLetter}
+                  onChange={(e) => setCoverLetter(e.target.value)}
+                />
+              </div>
 
               <div className="flex space-x-3">
                 <button
