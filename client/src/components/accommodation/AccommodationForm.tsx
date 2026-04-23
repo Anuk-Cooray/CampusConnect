@@ -60,9 +60,9 @@ export default function AccommodationForm({ existing, onSuccess, onCancel }: Pro
     if (!form.price) {
       errors.price = "Price is required.";
     } else if (isNaN(price) || price < 1000) {
-      errors.price = "Price must be at least Rs. 1,000.";
-    } else if (price > 500000) {
-      errors.price = "Price cannot exceed Rs. 500,000.";
+      errors.price = "Price must be at least Rs. 5,000.";
+    } else if (price > 100000) {
+      errors.price = "Price cannot exceed Rs. 100,000.";
     }
 
     // Email

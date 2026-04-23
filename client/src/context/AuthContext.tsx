@@ -1,9 +1,16 @@
 import { createContext, useContext, useState } from "react";
 
-export const AuthContext = createContext(null);
+// 1. Define type
+type AuthContextType = {
+  user: any;
+  setUser: React.Dispatch<React.SetStateAction<any>>;
+};
+
+// 2. Give type to context
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: any) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
 
   return (
     <AuthContext.Provider value={{ user, setUser }}>
@@ -12,6 +19,11 @@ export const AuthProvider = ({ children }: any) => {
   );
 };
 
+// 3. Handle null safely
 export const useAuth = () => {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
+  return context;
 };

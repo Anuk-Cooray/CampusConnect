@@ -6,13 +6,11 @@ import AIChatBot from "../components/accommodation/AIChatBot";
 export default function AccommodationsPage() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
 
-  // AI Bot එකෙන් එවන filter data store කරගන්නා state එක
+
   const [aiFilters, setAiFilters] = useState<any>(null);
 
-  /**
-   * AI Bot එකෙන් filters ලැබුණු විට ක්‍රියාත්මක වේ.
-   * මෙහි 'filters' යනු { maxPrice: 20000, location: 'Colombo' } වැනි object එකකි.
-   */
+  
+   
   const handleAIFilter = (filters: any) => {
     console.log("AI Filters Received from Bot:", filters);
     setAiFilters(filters);
@@ -34,7 +32,7 @@ export default function AccommodationsPage() {
           </div>
           
           <div className="flex items-center gap-3">
-            {/* AI Filter එකක් තිබේ නම් එය Clear කිරීමට button එකක් */}
+            
             {aiFilters && (
               <button 
                 onClick={() => setAiFilters(null)}
@@ -79,12 +77,11 @@ export default function AccommodationsPage() {
 
       {/* Main Content Area */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        {/* AccommodationList එකට aiFilters prop එක ලබා දීම */}
+        
         <AccommodationList aiFilters={aiFilters} />
       </div>
 
-      {/* AI Chatbot Component */}
-      {/* වැදගත්: ඔබේ Bot එකේ prop එක 'onFiltersApplied' නිසා එය මෙසේ භාවිතා කරන්න */}
+      
       <AIChatBot onFiltersApplied={handleAIFilter} />
 
     </div>

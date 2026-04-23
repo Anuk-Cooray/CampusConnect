@@ -13,7 +13,7 @@ export default function AdminChat() {
   const [socket, setSocket] = useState(null);
   
   const token = localStorage.getItem("token");
-  // ✅ Fix: "user" object එකෙන් ID ගන්නවා
+
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const userId = (user?._id || user?.id)?.toString();
 
@@ -64,7 +64,7 @@ export default function AdminChat() {
       headers: { Authorization: `Bearer ${token}` }
     }).then(res => setMessages(res.data.data || []));
 
-    // ✅ Mark as read
+    
     axios.put(`${API}/api/chat/${selectedConv._id}/read`, {}, {
       headers: { Authorization: `Bearer ${token}` }
     }).catch(console.error);
@@ -75,7 +75,7 @@ export default function AdminChat() {
   const sendMessage = () => {
     if (!messageText.trim() || !selectedConv || !socket) return;
     
-    // ✅ Locally add කරනවා immediately
+   
     const tempMsg = {
       _id: Date.now().toString(),
       conversationId: selectedConv._id,

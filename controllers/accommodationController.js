@@ -1,4 +1,4 @@
-// controllers/accommodationController.js
+
 const Accommodation = require('../models/Accommodation');
 const path = require('path');
 const fs = require('fs');
