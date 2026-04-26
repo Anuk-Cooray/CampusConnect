@@ -48,7 +48,7 @@ exports.createAccommodation = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Maximum 5 photos allowed' });
     }
 
-    const photoPaths = files.map(f => `/uploads/accommodations/${req.file.filename}`);
+    const photoPaths = files.map((f) => `/uploads/accommodations/${f.filename}`);
     const {
       title, description, price, distance, distanceUnit, address,
       facilities, gender, availableRooms,
@@ -76,7 +76,7 @@ exports.createAccommodation = async (req, res) => {
 
     res.status(201).json({ success: true, data: acc });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: err.message || 'Failed to create accommodation' });
   }
 };
 
@@ -133,7 +133,7 @@ exports.updateAccommodation = async (req, res) => {
 
     res.json({ success: true, data: updated });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: err.message || 'Failed to update accommodation' });
   }
 };
 
