@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
 const feedContainer = {
@@ -21,6 +21,157 @@ export default function Feed({
   formatMediaUrl,
 }) {
   const firstName = userName?.split(' ')?.[0] || 'Student';
+  const activeAuthor = userName || 'Anuk Cooray';
+  const userInitial = (userName?.charAt(0) || 'S').toUpperCase();
+  const [commentsByPost, setCommentsByPost] = useState({});
+  const [newCommentByPost, setNewCommentByPost] = useState({});
+  const [activeReplyTarget, setActiveReplyTarget] = useState({});
+  const [replyDraftByTarget, setReplyDraftByTarget] = useState({});
+  const [likeStateByPost, setLikeStateByPost] = useState({});
+
+  const getStorageKey = (postId) => `viva_comments_${postId}`;
+  const getLikeStorageKey = (postId) => `viva_post_likes_${postId}`;
+
+  const readStoredComments = (postId) => {
+    try {
+      const stored = localStorage.getItem(getStorageKey(postId));
+      if (!stored) return [];
+      const parsed = JSON.parse(stored);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
+    }
+  };
+
+  const persistComments = (postId, comments) => {
+    try {
+      localStorage.setItem(getStorageKey(postId), JSON.stringify(comments));
+    } catch (error) {
+      // Ignore quota/storage errors for demo mode.
+    }
+  };
+
+  const readStoredLikeState = (postId, fallbackLikes) => {
+    try {
+      const stored = localStorage.getItem(getLikeStorageKey(postId));
+      if (!stored) {
+        return { isLiked: false, likeCount: Number(fallbackLikes) || 0 };
+      }
+      const parsed = JSON.parse(stored);
+      return {
+        isLiked: Boolean(parsed?.isLiked),
+        likeCount: Number.isFinite(parsed?.likeCount) ? parsed.likeCount : Number(fallbackLikes) || 0,
+      };
+    } catch (error) {
+      return { isLiked: false, likeCount: Number(fallbackLikes) || 0 };
+    }
+  };
+
+  const persistLikeState = (postId, likeState) => {
+    try {
+      localStorage.setItem(getLikeStorageKey(postId), JSON.stringify(likeState));
+    } catch (error) {
+      // Ignore quota/storage errors for demo mode.
+    }
+  };
+
+  useEffect(() => {
+    setCommentsByPost((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      feedPosts.forEach((post) => {
+        if (next[post._id]) return;
+        next[post._id] = readStoredComments(post._id);
+        changed = true;
+      });
+
+      return changed ? next : prev;
+    });
+  }, [feedPosts]);
+
+  useEffect(() => {
+    setLikeStateByPost((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      feedPosts.forEach((post) => {
+        if (next[post._id]) return;
+        next[post._id] = readStoredLikeState(post._id, post.likes);
+        changed = true;
+      });
+
+      return changed ? next : prev;
+    });
+  }, [feedPosts]);
+
+  const handleAddComment = (postId) => {
+    const text = (newCommentByPost[postId] || '').trim();
+    if (!text) return;
+
+    const newComment = {
+      id: Date.now().toString(),
+      author: activeAuthor,
+      text,
+      replies: [],
+    };
+
+    setCommentsByPost((prev) => {
+      const nextComments = [...(prev[postId] || []), newComment];
+      const next = { ...prev, [postId]: nextComments };
+      persistComments(postId, nextComments);
+      return next;
+    });
+
+    setNewCommentByPost((prev) => ({ ...prev, [postId]: '' }));
+  };
+
+  const handleReplyToggle = (postId, commentId) => {
+    setActiveReplyTarget((prev) => ({
+      ...prev,
+      [postId]: prev[postId] === commentId ? null : commentId,
+    }));
+  };
+
+  const handleAddReply = (postId, commentId) => {
+    const draftKey = `${postId}_${commentId}`;
+    const replyText = (replyDraftByTarget[draftKey] || '').trim();
+    if (!replyText) return;
+
+    setCommentsByPost((prev) => {
+      const updatedComments = (prev[postId] || []).map((comment) => {
+        if (comment.id !== commentId) return comment;
+
+        const reply = {
+          id: Date.now().toString(),
+          author: activeAuthor,
+          text: replyText,
+          replies: [],
+        };
+
+        return { ...comment, replies: [...(comment.replies || []), reply] };
+      });
+
+      const next = { ...prev, [postId]: updatedComments };
+      persistComments(postId, updatedComments);
+      return next;
+    });
+
+    setReplyDraftByTarget((prev) => ({ ...prev, [draftKey]: '' }));
+    setActiveReplyTarget((prev) => ({ ...prev, [postId]: null }));
+  };
+
+  const handleToggleLike = (postId, fallbackLikes) => {
+    setLikeStateByPost((prev) => {
+      const current = prev[postId] || { isLiked: false, likeCount: Number(fallbackLikes) || 0 };
+      const next = current.isLiked
+        ? { isLiked: false, likeCount: Math.max(0, current.likeCount - 1) }
+        : { isLiked: true, likeCount: current.likeCount + 1 };
+
+      persistLikeState(postId, next);
+      return { ...prev, [postId]: next };
+    });
+  };
 
   return (
     <div className="space-y-5">
@@ -28,7 +179,7 @@ export default function Feed({
         <form onSubmit={handleCreatePost}>
           <div className="flex gap-3">
             <div className="h-12 w-12 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-blue-600/20">
-              {userName.charAt(0).toUpperCase()}
+              {userInitial}
             </div>
             <div className="flex-grow min-w-0">
               <input
@@ -72,6 +223,11 @@ export default function Feed({
       ) : (
         <motion.div variants={feedContainer} initial="hidden" animate="show" className="space-y-4">
           {feedPosts.map((post) => (
+            (() => {
+              const postComments = commentsByPost[post._id] || [];
+              const likeMeta = likeStateByPost[post._id] || { isLiked: false, likeCount: Number(post.likes) || 0 };
+              const nestedCommentCount = postComments.reduce((count, comment) => count + 1 + (comment.replies?.length || 0), 0);
+              return (
             <motion.div
               key={post._id}
               variants={feedItem}
@@ -161,16 +317,21 @@ export default function Feed({
                     <span className="bg-blue-500 rounded-full w-4 h-4 flex items-center justify-center text-white text-[10px]">
                       👍
                     </span>
-                    <span>{post.likes}</span>
+                    <span>{likeMeta.likeCount}</span>
                   </span>
-                  <span>{post.commentCount} comments</span>
+                  <span>{nestedCommentCount || post.commentCount || 0} comments</span>
                 </div>
               </div>
 
               <div className="px-2 py-1 flex justify-between bg-white">
                 <button
                   type="button"
-                  className="flex-1 flex items-center justify-center gap-2 text-slate-500 hover:bg-slate-100 py-3 rounded-xl font-bold text-sm transition-colors"
+                  onClick={() => handleToggleLike(post._id, post.likes)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm active:scale-95 transition-all duration-200 ${
+                    likeMeta.isLiked
+                      ? 'text-blue-600 bg-blue-50'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
@@ -206,7 +367,102 @@ export default function Feed({
                   Share
                 </button>
               </div>
+
+              <div className="px-4 sm:px-5 pb-4 pt-2 bg-white">
+                <div className="space-y-3 mb-4">
+                  {postComments.map((comment) => {
+                    const replyTargetKey = `${post._id}_${comment.id}`;
+                    const isReplyOpen = activeReplyTarget[post._id] === comment.id;
+                    return (
+                      <div key={comment.id} className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                        <div className="flex items-start gap-2.5">
+                          <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                            {comment.author?.charAt(0)?.toUpperCase() || 'A'}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-semibold text-slate-800">{comment.author}</p>
+                            <p className="text-sm text-slate-700 whitespace-pre-wrap">{comment.text}</p>
+                            <button
+                              type="button"
+                              onClick={() => handleReplyToggle(post._id, comment.id)}
+                              className="mt-1 text-xs text-slate-500 hover:text-blue-600 transition-colors"
+                            >
+                              Reply
+                            </button>
+                          </div>
+                        </div>
+
+                        {isReplyOpen && (
+                          <div className="mt-2 ml-8 border-l-2 border-slate-100 pl-4">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={replyDraftByTarget[replyTargetKey] || ''}
+                                onChange={(e) =>
+                                  setReplyDraftByTarget((prev) => ({
+                                    ...prev,
+                                    [replyTargetKey]: e.target.value,
+                                  }))
+                                }
+                                placeholder="Write a reply..."
+                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-500/20"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleAddReply(post._id, comment.id)}
+                                className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+                              >
+                                Post
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {(comment.replies || []).length > 0 && (
+                          <div className="mt-3 ml-8 border-l-2 border-slate-100 pl-4 space-y-2">
+                            {comment.replies.map((reply) => (
+                              <div key={reply.id} className="flex items-start gap-2.5 rounded-lg bg-white border border-slate-100 p-2.5">
+                                <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                                  {reply.author?.charAt(0)?.toUpperCase() || 'A'}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-[11px] font-semibold text-slate-800">{reply.author}</p>
+                                  <p className="text-xs text-slate-700 whitespace-pre-wrap">{reply.text}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newCommentByPost[post._id] || ''}
+                    onChange={(e) =>
+                      setNewCommentByPost((prev) => ({
+                        ...prev,
+                        [post._id]: e.target.value,
+                      }))
+                    }
+                    placeholder="Write a comment..."
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 outline-none focus:bg-white focus:border-blue-300 focus:ring-2 focus:ring-blue-500/20"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleAddComment(post._id)}
+                    className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 transition-colors"
+                  >
+                    Post
+                  </button>
+                </div>
+              </div>
             </motion.div>
+              );
+            })()
           ))}
         </motion.div>
       )}
