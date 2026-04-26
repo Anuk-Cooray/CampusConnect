@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 
 const feedContainer = {
@@ -28,6 +28,10 @@ export default function Feed({
   const [activeReplyTarget, setActiveReplyTarget] = useState({});
   const [replyDraftByTarget, setReplyDraftByTarget] = useState({});
   const [likeStateByPost, setLikeStateByPost] = useState({});
+  const [selectedMediaFile, setSelectedMediaFile] = useState(null);
+  const [selectedMediaType, setSelectedMediaType] = useState('none');
+  const photoInputRef = useRef(null);
+  const documentInputRef = useRef(null);
 
   const getStorageKey = (postId) => `viva_comments_${postId}`;
   const getLikeStorageKey = (postId) => `viva_post_likes_${postId}`;
@@ -173,10 +177,41 @@ export default function Feed({
     });
   };
 
+  const handlePhotoSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedMediaFile(file);
+    setSelectedMediaType('image');
+  };
+
+  const handleDocumentSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedMediaFile(file);
+    setSelectedMediaType('document');
+  };
+
+  const clearSelectedMedia = () => {
+    setSelectedMediaFile(null);
+    setSelectedMediaType('none');
+    if (photoInputRef.current) photoInputRef.current.value = '';
+    if (documentInputRef.current) documentInputRef.current.value = '';
+  };
+
+  const handleSubmitPost = async (e) => {
+    const created = await handleCreatePost(e, {
+      mediaFile: selectedMediaFile,
+      mediaType: selectedMediaType,
+    });
+    if (created) {
+      clearSelectedMedia();
+    }
+  };
+
   return (
     <div className="space-y-5">
       <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm p-4">
-        <form onSubmit={handleCreatePost}>
+        <form onSubmit={handleSubmitPost}>
           <div className="flex gap-3">
             <div className="h-12 w-12 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-blue-600/20">
               {userInitial}
@@ -193,14 +228,32 @@ export default function Feed({
             </div>
           </div>
           <div className="border-t border-slate-100 mt-4 pt-3 flex flex-wrap justify-between gap-2 px-1">
+            <input
+              ref={photoInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoSelect}
+              className="hidden"
+            />
+            <input
+              ref={documentInputRef}
+              type="file"
+              accept=".pdf,.doc,.docx,.ppt,.pptx,.txt,.zip"
+              onChange={handleDocumentSelect}
+              className="hidden"
+            />
             <button
               type="button"
+              onClick={() => photoInputRef.current?.click()}
+              disabled={isPosting}
               className="flex items-center gap-2 text-slate-500 hover:bg-slate-100 py-2 px-4 rounded-xl font-semibold text-sm transition-colors"
             >
               <span className="text-lg">📷</span> Photo
             </button>
             <button
               type="button"
+              onClick={() => documentInputRef.current?.click()}
+              disabled={isPosting}
               className="flex items-center gap-2 text-slate-500 hover:bg-slate-100 py-2 px-4 rounded-xl font-semibold text-sm transition-colors"
             >
               <span className="text-lg">📄</span> Document
@@ -212,6 +265,20 @@ export default function Feed({
             >
               {isPosting ? 'Posting…' : 'Post'}
             </button>
+            {selectedMediaFile && (
+              <div className="w-full mt-2 text-xs text-slate-600 bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 flex items-center justify-between">
+                <span className="truncate">
+                  Attached {selectedMediaType}: {selectedMediaFile.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={clearSelectedMedia}
+                  className="ml-3 text-slate-500 hover:text-red-600"
+                >
+                  Remove
+                </button>
+              </div>
+            )}
           </div>
         </form>
       </div>
@@ -351,20 +418,6 @@ export default function Feed({
                     />
                   </svg>
                   Comment
-                </button>
-                <button
-                  type="button"
-                  className="flex-1 flex items-center justify-center gap-2 text-slate-500 hover:bg-slate-100 py-3 rounded-xl font-bold text-sm transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                    />
-                  </svg>
-                  Share
                 </button>
               </div>
 
