@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BookOpen, Briefcase, Home, Brain, ShoppingCart } from 'lucide-react';
+import { BookOpen, Briefcase, Home, Brain, ShoppingCart, Clock } from 'lucide-react';
 
 const LINKS = [
   { name: 'Study Support Feed', path: '/dashboard', icon: BookOpen, chip: 'bg-blue-100 text-blue-600' },
@@ -8,6 +8,8 @@ const LINKS = [
   { name: 'Accommodation', path: '/accommodations', icon: Home, chip: 'bg-blue-100 text-blue-600' },
   { name: 'Study Support & Q&A', path: '/study-support', icon: Brain, chip: 'bg-orange-100 text-orange-600' },
   { name: 'Student Marketplace', path: '/marketplace', icon: ShoppingCart, chip: 'bg-purple-100 text-purple-600' },
+  { name: 'Student TimeTable Management', path: '/time-management', icon: Clock, chip: 'bg-purple-100 text-purple-600' },
+
 ];
 
 export default function DashboardSidebar({ userName, studentId = 'IT23328020' }) {
