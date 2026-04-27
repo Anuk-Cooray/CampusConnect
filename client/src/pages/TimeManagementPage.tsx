@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -101,146 +101,6 @@ function ReminderBell({ assignments, exams }: { assignments: any[]; exams: any[]
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-// ── SUBJECT PROGRESS CHART ──
-function SubjectProgressChart({ sessions, assignments }: { sessions: any[]; assignments: any[] }) {
-  // Calculate hours per subject from sessions
-  const subjectHours: Record<string, number> = {};
-  sessions.forEach(s => {
-    if (!s.subject) return;
-    const start = s.startTime?.split(":").map(Number);
-    const end = s.endTime?.split(":").map(Number);
-    if (start && end) {
-      const hours = (end[0] * 60 + end[1] - (start[0] * 60 + start[1])) / 60;
-      subjectHours[s.subject] = (subjectHours[s.subject] || 0) + Math.max(0, hours);
-    }
-  });
-
-  // Also count assignments per subject
-  const subjectAss: Record<string, { total: number; done: number }> = {};
-  assignments.forEach(a => {
-    if (!a.subject) return;
-    if (!subjectAss[a.subject]) subjectAss[a.subject] = { total: 0, done: 0 };
-    subjectAss[a.subject].total++;
-    if (a.status === "Completed") subjectAss[a.subject].done++;
-  });
-
-  const allSubjects = [...new Set([...Object.keys(subjectHours), ...Object.keys(subjectAss)])];
-  const maxHours = Math.max(...Object.values(subjectHours), 1);
-
-  const COLORS = [
-    "bg-blue-500", "bg-indigo-500", "bg-emerald-500", "bg-violet-500",
-    "bg-amber-500", "bg-rose-500", "bg-teal-500", "bg-orange-500",
-  ];
-
-  if (allSubjects.length === 0) {
-    return (
-      <div className="text-center py-6">
-        <p className="text-2xl mb-1">📊</p>
-        <p className="text-xs text-slate-400">Add study sessions to see chart</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {allSubjects.map((subject, i) => {
-        const hours = subjectHours[subject] || 0;
-        const assData = subjectAss[subject];
-        const pct = Math.round((hours / maxHours) * 100);
-        const color = COLORS[i % COLORS.length];
-        return (
-          <div key={subject}>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-bold text-slate-700 truncate max-w-[120px]">{subject}</span>
-              <div className="flex items-center gap-2">
-                {assData && (
-                  <span className="text-[10px] text-slate-400 font-semibold">
-                    {assData.done}/{assData.total} tasks
-                  </span>
-                )}
-                <span className="text-[10px] font-black text-slate-600">
-                  {hours > 0 ? `${hours.toFixed(1)}h` : "0h"}
-                </span>
-              </div>
-            </div>
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div className={`h-full ${color} rounded-full transition-all duration-500`}
-                style={{ width: `${pct}%` }} />
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ── WEEKLY STUDY HOURS ──
-function WeeklyStudyHours({ sessions }: { sessions: any[] }) {
-  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const today = new Date();
-
-  // Get last 7 days
-  const weekData = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(today);
-    date.setDate(today.getDate() - (6 - i));
-    const dateStr = date.toISOString().split("T")[0];
-    const daySessions = sessions.filter(s => s.date?.split("T")[0] === dateStr);
-    let totalHours = 0;
-    daySessions.forEach(s => {
-      const start = s.startTime?.split(":").map(Number);
-      const end = s.endTime?.split(":").map(Number);
-      if (start && end) {
-        totalHours += Math.max(0, (end[0] * 60 + end[1] - (start[0] * 60 + start[1])) / 60);
-      }
-    });
-    return {
-      day: days[date.getDay()],
-      date: date.getDate(),
-      hours: totalHours,
-      isToday: dateStr === today.toISOString().split("T")[0],
-    };
-  });
-
-  const maxH = Math.max(...weekData.map(d => d.hours), 1);
-  const totalWeekHours = weekData.reduce((sum, d) => sum + d.hours, 0);
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-black text-slate-400 uppercase tracking-widest">This Week</p>
-        <span className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-          {totalWeekHours.toFixed(1)}h total
-        </span>
-      </div>
-      <div className="flex items-end justify-between gap-1 h-20">
-        {weekData.map((d, i) => {
-          const heightPct = maxH > 0 ? (d.hours / maxH) * 100 : 0;
-          return (
-            <div key={i} className="flex flex-col items-center gap-1 flex-1">
-              <span className="text-[9px] text-slate-400 font-bold">
-                {d.hours > 0 ? `${d.hours.toFixed(1)}h` : ""}
-              </span>
-              <div className="w-full flex items-end" style={{ height: "48px" }}>
-                <div
-                  className={`w-full rounded-t-lg transition-all duration-500 ${
-                    d.isToday ? "bg-gradient-to-t from-blue-600 to-blue-400" :
-                    d.hours > 0 ? "bg-gradient-to-t from-indigo-400 to-indigo-300" : "bg-slate-100"
-                  }`}
-                  style={{ height: `${Math.max(heightPct, d.hours > 0 ? 15 : 4)}%` }}
-                />
-              </div>
-              <span className={`text-[9px] font-black ${d.isToday ? "text-blue-600" : "text-slate-400"}`}>
-                {d.day}
-              </span>
-              {d.isToday && <div className="w-1 h-1 rounded-full bg-blue-500" />}
-            </div>
-          );
-        })}
-      </div>
     </div>
   );
 }
@@ -364,6 +224,7 @@ export default function TimeManagementPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 font-sans text-slate-800">
 
+      {/* Toast */}
       {toast && (
         <div className="fixed top-5 right-5 z-50 bg-white border border-blue-100 text-blue-700 font-bold text-sm px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-2">
           <span className="w-5 h-5 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-full flex items-center justify-center text-xs">✓</span>
@@ -371,7 +232,7 @@ export default function TimeManagementPage() {
         </div>
       )}
 
-      {/* Navbar */}
+      {/* Navbar — matches MainDashboard */}
       <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4 shadow-sm">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-2">
@@ -384,8 +245,10 @@ export default function TimeManagementPage() {
           </div>
           <div className="flex items-center gap-3">
             <ReminderBell assignments={assignments} exams={exams} />
-            <button onClick={() => navigate("/dashboard")}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition-all active:scale-95">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-bold transition-all active:scale-95"
+            >
               ← Back to Hub
             </button>
           </div>
@@ -395,8 +258,9 @@ export default function TimeManagementPage() {
       {/* Page Header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-6 text-center">
         <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-3 tracking-tight">
+          {" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
-            Time Management
+           Time Management
           </span>
         </h2>
         <p className="text-lg text-slate-500 font-medium max-w-2xl mx-auto">
@@ -407,7 +271,7 @@ export default function TimeManagementPage() {
       <div className="max-w-7xl mx-auto px-6 pb-10">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
 
-          {/* ── LEFT SIDEBAR ── */}
+          {/* LEFT SIDEBAR */}
           <div className="lg:col-span-1 space-y-4">
 
             {/* Quick Add */}
@@ -427,7 +291,7 @@ export default function TimeManagementPage() {
               </button>
             </div>
 
-            {/* Summary */}
+            {/* Stats */}
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-5">
               <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Summary</p>
               <div className="space-y-2.5">
@@ -448,7 +312,7 @@ export default function TimeManagementPage() {
               </div>
             </div>
 
-            {/* Progress Bars */}
+            {/* Progress */}
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-5">
               <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Progress</p>
               <div className="space-y-3">
@@ -470,17 +334,6 @@ export default function TimeManagementPage() {
               </div>
             </div>
 
-            {/* ── WEEKLY STUDY HOURS CHART ── */}
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-5">
-              <WeeklyStudyHours sessions={sessions} />
-            </div>
-
-            {/* ── SUBJECT PROGRESS CHART ── */}
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-5">
-              <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Subject Progress</p>
-              <SubjectProgressChart sessions={sessions} assignments={assignments} />
-            </div>
-
             {/* Legend */}
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-5">
               <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Legend</p>
@@ -499,10 +352,11 @@ export default function TimeManagementPage() {
             </div>
           </div>
 
-          {/* ── MAIN CALENDAR ── */}
+          {/* MAIN CALENDAR */}
           <div className="lg:col-span-3 space-y-5">
             <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-5">
 
+              {/* Calendar Header */}
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-xl font-black text-slate-800">
                   {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
@@ -637,7 +491,15 @@ export default function TimeManagementPage() {
                           }`}>{day.date.getDate()}</p>
                           <div className="space-y-0.5">
                             {day.assignments.slice(0,2).map((a: any) => (
-                              <div key={a._id} className="bg-blue-100 text-blue-700 text-[9px] px-1 py-0.5 rounded font-bold truncate">{a.title}</div>
+                              <div key={a._id} className="group relative bg-blue-100 text-blue-700 text-[9px] px-1 py-0.5 rounded font-bold">
+                                <span className="truncate pr-4">{a.title}</span>
+                                <div className="absolute right-0 top-0 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button onClick={() => { setEditAss(a); setAssForm({ title: a.title, subject: a.subject, description: a.description, deadline: a.deadline?.slice(0,10), priority: a.priority }); setShowAssForm(true); }}
+                                    className="w-3 h-3 bg-blue-200 hover:bg-blue-300 rounded flex items-center justify-center text-[6px]" title="Edit">✏️</button>
+                                  <button onClick={() => axios.delete(`${API}/api/time/assignments/${a._id}`, { headers: headers() }).then(() => { showToast("Deleted!"); fetchAll(); })}
+                                    className="w-3 h-3 bg-red-200 hover:bg-red-300 rounded flex items-center justify-center text-[6px]" title="Delete">🗑️</button>
+                                </div>
+                              </div>
                             ))}
                             {day.exams.slice(0,1).map((e: any) => (
                               <div key={e._id} className="bg-indigo-100 text-indigo-700 text-[9px] px-1 py-0.5 rounded font-bold truncate">{e.subject}</div>
@@ -682,9 +544,9 @@ export default function TimeManagementPage() {
                         </div>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
                           <button onClick={() => { setEditAss(item); setAssForm({ title: item.title, subject: item.subject, description: item.description, deadline: item.deadline?.slice(0,10), priority: item.priority }); setShowAssForm(true); }}
-                            className="w-6 h-6 rounded-lg bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-600 text-sm">✏️</button>
+                            className="w-6 h-6 rounded-lg bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-600 text-sm transition-colors" title="Edit">✏️</button>
                           <button onClick={() => axios.delete(`${API}/api/time/assignments/${item._id}`, { headers: headers() }).then(() => { showToast("Deleted!"); fetchAll(); })}
-                            className="w-6 h-6 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 text-sm">🗑️</button>
+                            className="w-6 h-6 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 text-sm transition-colors" title="Delete">🗑️</button>
                         </div>
                         <span className="text-[10px] bg-blue-100 text-blue-700 font-black px-2 py-1 rounded-full flex-shrink-0">Assignment</span>
                       </>
@@ -698,9 +560,9 @@ export default function TimeManagementPage() {
                         </div>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
                           <button onClick={() => { setEditExam(item); setExamForm({ subject: item.subject, examDate: item.examDate?.slice(0,10), startTime: item.startTime, venue: item.venue, notes: item.notes }); setShowExamForm(true); }}
-                            className="w-6 h-6 rounded-lg bg-indigo-50 hover:bg-indigo-100 flex items-center justify-center text-indigo-600 text-sm">✏️</button>
+                            className="w-6 h-6 rounded-lg bg-indigo-50 hover:bg-indigo-100 flex items-center justify-center text-indigo-600 text-sm transition-colors" title="Edit">✏️</button>
                           <button onClick={() => axios.delete(`${API}/api/time/exams/${item._id}`, { headers: headers() }).then(() => { showToast("Deleted!"); fetchAll(); })}
-                            className="w-6 h-6 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 text-sm">🗑️</button>
+                            className="w-6 h-6 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 text-sm transition-colors" title="Delete">🗑️</button>
                         </div>
                         <span className="text-[10px] bg-indigo-100 text-indigo-700 font-black px-2 py-1 rounded-full flex-shrink-0">Exam</span>
                       </>
@@ -717,9 +579,9 @@ export default function TimeManagementPage() {
                         </div>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
                           <button onClick={() => { setEditSess(item); setSessForm({ subject: item.subject, topic: item.topic, date: item.date?.slice(0,10), startTime: item.startTime, endTime: item.endTime, notes: item.notes }); setShowSessForm(true); }}
-                            className="w-6 h-6 rounded-lg bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center text-emerald-600 text-sm">✏️</button>
+                            className="w-6 h-6 rounded-lg bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center text-emerald-600 text-sm transition-colors" title="Edit">✏️</button>
                           <button onClick={() => axios.delete(`${API}/api/time/study-sessions/${item._id}`, { headers: headers() }).then(() => { showToast("Deleted!"); fetchAll(); })}
-                            className="w-6 h-6 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 text-sm">🗑️</button>
+                            className="w-6 h-6 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-500 text-sm transition-colors" title="Delete">🗑️</button>
                         </div>
                         <span className="text-[10px] bg-emerald-100 text-emerald-700 font-black px-2 py-1 rounded-full flex-shrink-0">Study</span>
                       </>
@@ -758,7 +620,7 @@ export default function TimeManagementPage() {
             </div>
             <div className="flex gap-3 pt-2">
               <button onClick={() => setShowAssForm(false)} className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold text-slate-500 hover:bg-slate-50">Cancel</button>
-              <button onClick={saveAssignment} className="flex-1 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-bold shadow-md">{editAss ? "Update" : "Add"}</button>
+              <button onClick={saveAssignment} className="flex-1 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl text-sm font-bold shadow-md">{editAss ? "Update" : "Add"}</button>
             </div>
           </div>
         </Modal>
@@ -781,7 +643,7 @@ export default function TimeManagementPage() {
               <textarea className={inp + " resize-none"} rows={2} value={examForm.notes} onChange={e => setExamForm({...examForm, notes: e.target.value})} placeholder="Topics to focus on..." /></div>
             <div className="flex gap-3 pt-2">
               <button onClick={() => setShowExamForm(false)} className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold text-slate-500 hover:bg-slate-50">Cancel</button>
-              <button onClick={saveExam} className="flex-1 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-xl text-sm font-bold shadow-md">{editExam ? "Update" : "Add"}</button>
+              <button onClick={saveExam} className="flex-1 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl text-sm font-bold shadow-md">{editExam ? "Update" : "Add"}</button>
             </div>
           </div>
         </Modal>
@@ -806,7 +668,7 @@ export default function TimeManagementPage() {
               <textarea className={inp + " resize-none"} rows={2} value={sessForm.notes} onChange={e => setSessForm({...sessForm, notes: e.target.value})} placeholder="Optional..." /></div>
             <div className="flex gap-3 pt-2">
               <button onClick={() => setShowSessForm(false)} className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-semibold text-slate-500 hover:bg-slate-50">Cancel</button>
-              <button onClick={saveSession} className="flex-1 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl text-sm font-bold shadow-md">{editSess ? "Update" : "Add"}</button>
+              <button onClick={saveSession} className="flex-1 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl text-sm font-bold shadow-md">{editSess ? "Update" : "Add"}</button>
             </div>
           </div>
         </Modal>
