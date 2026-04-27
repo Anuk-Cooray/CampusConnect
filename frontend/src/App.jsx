@@ -25,45 +25,49 @@ import AccommodationsPage from "./pages/AccommodationsPage";
 import TimeManagementPage from "./pages/TimeManagementPage.tsx";
 import AccommodationForm from "./components/accommodation/AccommodationForm";
 import AccommodationDetail from "./components/accommodation/AccommodationDetail";
+import AICounselor from "./components/ui/AICounselor";
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/login" replace />} />
+    <>
+      <Routes>
+        <Route path="/" element={<Navigate to="/login" replace />} />
 
-      <Route path="/register" element={<Register />} />
-      <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
 
-      <Route path="/dashboard" element={<MainDashboard />} />
-      <Route path="/jobs" element={<JobPortal />} />
-      <Route path="/profile" element={<StudentProfile />} />
-      <Route path="/applications/track" element={<ApplicationTracker />} />
+        <Route path="/dashboard" element={<MainDashboard />} />
+        <Route path="/jobs" element={<JobPortal />} />
+        <Route path="/profile" element={<StudentProfile />} />
+        <Route path="/applications/track" element={<ApplicationTracker />} />
 
-      <Route path="/admin-dashboard" element={<AdminDashboard />} />
-      <Route path="/admin/jobs" element={<AdminJobPortal />} />
-      <Route path="/admin/applications" element={<AdminApplicationViewer />} />
-      <Route path="/admin/qa" element={<AdminQAManager />} />
-      <Route path="/admin/study-support" element={<AdminStudySupportOversight />} />
-      <Route path="/admin/marketplace" element={<AdminMarketplace />} />
-      <Route path="/admin/accommodation" element={<Navigate to="/admin/accommodations" replace />} />
+        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/jobs" element={<AdminJobPortal />} />
+        <Route path="/admin/applications" element={<AdminApplicationViewer />} />
+        <Route path="/admin/qa" element={<AdminQAManager />} />
+        <Route path="/admin/study-support" element={<AdminStudySupportOversight />} />
+        <Route path="/admin/marketplace" element={<AdminMarketplace />} />
+        <Route path="/admin/accommodation" element={<Navigate to="/admin/accommodations" replace />} />
 
-      <Route path="/accommodation" element={<Navigate to="/accommodations" replace />} />
-      <Route path="/accommodations" element={<AccommodationsPage />} />
-      <Route path="/accommodations/new" element={<AccommodationForm />} />
-      <Route path="/accommodations/:id/edit" element={<AccommodationForm />} />
-      <Route path="/accommodations/:id" element={<AccommodationDetail />} />
-      <Route path="/admin/accommodations" element={<AdminAccommodationPage />} />
-      <Route path="/time-management" element={<TimeManagementPage />} />
+        <Route path="/accommodation" element={<Navigate to="/accommodations" replace />} />
+        <Route path="/accommodations" element={<AccommodationsPage />} />
+        <Route path="/accommodations/new" element={<AccommodationForm />} />
+        <Route path="/accommodations/:id/edit" element={<AccommodationForm />} />
+        <Route path="/accommodations/:id" element={<AccommodationDetail />} />
+        <Route path="/admin/accommodations" element={<AdminAccommodationPage />} />
+        <Route path="/time-management" element={<TimeManagementPage />} />
 
-      <Route path="/marketplace" element={<Marketplace />} />
-      <Route path="/marketplace/dashboard" element={<StudentMarketplaceDashboard />} />
-      <Route path="/study-support" element={<StudySupportDashboard />} />
-      <Route path="/study-support/bookings" element={<StudyBooking />} />
-      <Route path="/study-support/materials" element={<LectureMaterials />} />
-      <Route path="/study-support/kuppi/create" element={<CreateKuppiSession />} />
-      <Route path="/study-support/kuppi/upcoming" element={<UpcomingKuppiSessions />} />
-      <Route path="/study-support/kuppi" element={<UpcomingKuppiSessions />} />
-      <Route path="/study-support/qna" element={<QandA />} />
-    </Routes>
+        <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/marketplace/dashboard" element={<StudentMarketplaceDashboard />} />
+        <Route path="/study-support" element={<StudySupportDashboard />} />
+        <Route path="/study-support/bookings" element={<StudyBooking />} />
+        <Route path="/study-support/materials" element={<LectureMaterials />} />
+        <Route path="/study-support/kuppi/create" element={<CreateKuppiSession />} />
+        <Route path="/study-support/kuppi/upcoming" element={<UpcomingKuppiSessions />} />
+        <Route path="/study-support/kuppi" element={<UpcomingKuppiSessions />} />
+        <Route path="/study-support/qna" element={<QandA />} />
+      </Routes>
+      <AICounselor />
+    </>
   );
 }

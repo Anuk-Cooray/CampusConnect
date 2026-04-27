@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { PartTimeJobs } from '../components/dashboard/PartTimeJobs';
 
 const JobPortal = () => {
   const navigate = useNavigate();
@@ -11,7 +12,13 @@ const JobPortal = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('All');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
+  const [targetRole, setTargetRole] = useState('');
+  const [aiResult, setAiResult] = useState(null);
+  const [isGeneratingLetter, setIsGeneratingLetter] = useState(false);
+  const [coverLetter, setCoverLetter] = useState('');
+  const [activeTab, setActiveTab] = useState('Internships');
 
   // Hardcoded for the presentation demo
   const currentUserId = 'IT23328020';
@@ -56,13 +63,24 @@ const JobPortal = () => {
     return { score, matchedSkills };
   };
 
-  const filteredJobs = jobs.filter((job) => {
-    const matchesSearch =
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'All' || job.jobType === filterType;
-    return matchesSearch && matchesType;
-  });
+  const categoryFilteredJobs = useMemo(() => {
+    if (activeTab === 'Part-Time Jobs') return [];
+    if (activeTab === 'Internships') {
+      return jobs.filter((job) => job.jobType === 'Internship');
+    }
+    return jobs.filter((job) => job.jobType === 'Job');
+  }, [jobs, activeTab]);
+
+  const filteredJobs = useMemo(() => {
+    const q = searchTerm.toLowerCase().trim();
+    return categoryFilteredJobs.filter((job) => {
+      if (!q) return true;
+      return (
+        job.title.toLowerCase().includes(q) ||
+        job.company.toLowerCase().includes(q)
+      );
+    });
+  }, [categoryFilteredJobs, searchTerm]);
 
   // Sort jobs so the highest ATS matches appear at the TOP of the feed!
   const sortedAndFilteredJobs = [...filteredJobs].sort((a, b) => {
@@ -74,6 +92,7 @@ const JobPortal = () => {
   const handleApplyClick = (job) => {
     setSelectedJob(job);
     setIsModalOpen(true);
+    setCoverLetter('');
   };
 
   const submitApplication = async (e) => {
@@ -125,6 +144,76 @@ const JobPortal = () => {
     localStorage.removeItem('userName');
     localStorage.removeItem('userRole');
     navigate('/login');
+  };
+
+  const handleGenerateCoverLetter = async (job) => {
+    if (!job) return;
+    setIsGeneratingLetter(true);
+    try {
+      const studentName = localStorage.getItem('userName') || 'IT Undergraduate';
+      const payload = {
+        studentName,
+        major: userProfile?.degree || userProfile?.major || 'Information Technology',
+        skills: Array.isArray(userProfile?.skills) && userProfile.skills.length
+          ? userProfile.skills.join(', ')
+          : 'React, Node.js, Express, MongoDB, UI/UX Design',
+        jobTitle: job.title,
+        company: job.company,
+      };
+
+      const response = await fetch('http://localhost:5000/api/ai/cover-letter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'AI generation failed');
+      setCoverLetter(data.coverLetter || '');
+    } catch (error) {
+      console.error('AI Generation failed:', error);
+      setCoverLetter(error.message || 'Failed to connect to the AI. Please try again.');
+    } finally {
+      setIsGeneratingLetter(false);
+    }
+  };
+
+  const runAiAssist = async () => {
+    setAiLoading(true);
+    setAiError('');
+    try {
+      const jobsForAssist =
+        activeTab === 'Jobs'
+          ? jobs.filter((j) => j.jobType === 'Job')
+          : activeTab === 'Internships'
+            ? jobs.filter((j) => j.jobType === 'Internship')
+            : jobs;
+
+      const response = await fetch('http://localhost:5000/api/jobs/ai-assist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobs: jobsForAssist.map((j) => ({
+            _id: j._id,
+            title: j.title,
+            company: j.company,
+            description: j.description,
+            jobType: j.jobType,
+          })),
+          profile: userProfile || {},
+          targetRole,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to generate AI suggestions');
+      setAiResult(data);
+    } catch (err) {
+      setAiError(err.message);
+      setAiResult(null);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   return (
@@ -181,49 +270,122 @@ const JobPortal = () => {
       </nav>
 
       <main className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h2 className="text-4xl font-extrabold text-slate-900 mb-2 tracking-tight">Discover Opportunities</h2>
-            <p className="text-slate-500 font-medium text-lg">
-              {userProfile
-                ? 'Your ATS engine is actively scanning for matches.'
-                : 'Set up your ATS profile to unlock AI matching.'}
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Career opportunities</h1>
+            <p className="text-slate-500 mt-1 text-sm sm:text-base">
+              {activeTab === 'Internships' &&
+                (userProfile
+                  ? 'Your ATS engine is actively finding your best internship matches.'
+                  : 'Set up your ATS profile to unlock AI matching.')}
+              {activeTab === 'Jobs' &&
+                (userProfile
+                  ? 'Full-time and graduate roles—ranked with the same ATS engine.'
+                  : 'Browse job postings and enable your profile for smarter matching.')}
+              {activeTab === 'Part-Time Jobs' &&
+                'Flexible part-time roles—separate from the main ATS internship and job feeds.'}
             </p>
           </div>
-          <div className="bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200 flex items-center space-x-2">
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
-            </span>
-            <span className="text-sm font-bold text-slate-700">{filteredJobs.length} Active Postings</span>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-10 flex flex-col md:flex-row gap-4 items-center">
-          <div className="relative flex-grow w-full">
-            <input
-              type="text"
-              placeholder="Search by role or company..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-4 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium"
-            />
-          </div>
-          <div className="flex space-x-2 w-full md:w-auto overflow-x-auto">
-            {['All', 'Job', 'Internship'].map((type) => (
+          <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner w-full md:w-auto gap-0.5">
+            {['Internships', 'Jobs', 'Part-Time Jobs'].map((tab) => (
               <button
-                key={type}
-                onClick={() => setFilterType(type)}
-                className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                  filterType === type
-                    ? 'bg-slate-800 text-white shadow-md'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 md:flex-none px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all duration-200 whitespace-nowrap ${
+                  activeTab === tab
+                    ? 'bg-white text-blue-600 shadow-sm border border-slate-200/50'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200/50'
                 }`}
               >
-                {type === 'All' ? 'All Roles' : `${type}s`}
+                {tab}
               </button>
             ))}
           </div>
+        </div>
+
+        {activeTab !== 'Part-Time Jobs' && (
+          <div className="mb-8">
+            <div className="bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200 inline-flex items-center space-x-2">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+              </span>
+              <span className="text-sm font-bold text-slate-700">{filteredJobs.length} active postings</span>
+            </div>
+          </div>
+        )}
+
+        {activeTab !== 'Part-Time Jobs' ? (
+          <>
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-10">
+          <input
+            type="search"
+            placeholder="Search by role or company..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-4 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium"
+          />
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-8">
+          <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">AI Job Assistant</h3>
+              <p className="text-sm text-slate-500">Get top matches and profile improvement tips with Gemini.</p>
+            </div>
+            <div className="w-full md:w-auto flex gap-2">
+              <input
+                type="text"
+                value={targetRole}
+                onChange={(e) => setTargetRole(e.target.value)}
+                placeholder={
+                  activeTab === 'Jobs'
+                    ? 'Target role (e.g., Software Engineer)'
+                    : 'Target role (e.g., Frontend Intern)'
+                }
+                className="w-full md:w-72 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm"
+              />
+              <button
+                onClick={runAiAssist}
+                disabled={aiLoading}
+                className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-60"
+              >
+                {aiLoading ? 'Analyzing...' : 'Run AI'}
+              </button>
+            </div>
+          </div>
+
+          {aiError && <p className="mt-3 text-sm text-red-600">{aiError}</p>}
+
+          {aiResult && (
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              <div className="bg-slate-50 rounded-xl p-3 border border-slate-200">
+                <p className="text-sm font-bold text-slate-800 mb-2">Top Matches</p>
+                <ul className="space-y-1 text-xs text-slate-700">
+                  {(aiResult.topMatches || []).slice(0, 5).map((m, i) => (
+                    <li key={i}>#{i + 1} Score {m.score}% - {m.reason}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3 border border-slate-200">
+                <p className="text-sm font-bold text-slate-800 mb-2">Profile Improvements</p>
+                <ul className="space-y-1 text-xs text-slate-700">
+                  {(aiResult.profileImprovements || []).slice(0, 5).map((tip, i) => (
+                    <li key={i}>- {tip}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3 border border-slate-200">
+                <p className="text-sm font-bold text-slate-800 mb-2">Resume Bullet Ideas</p>
+                <ul className="space-y-1 text-xs text-slate-700">
+                  {(aiResult.resumeBulletIdeas || []).slice(0, 5).map((tip, i) => (
+                    <li key={i}>- {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Job Listings Grid */}
@@ -296,6 +458,12 @@ const JobPortal = () => {
             })
           )}
         </div>
+          </>
+        ) : (
+          <div>
+            <PartTimeJobs />
+          </div>
+        )}
       </main>
 
       {/* Premium Application Modal */}
@@ -328,6 +496,32 @@ const JobPortal = () => {
                   />
                 </div>
               )}
+
+              <div className="mt-6 border-t border-slate-100 pt-6">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-bold text-slate-700">Cover Letter</label>
+                  <button
+                    type="button"
+                    onClick={() => handleGenerateCoverLetter(selectedJob)}
+                    disabled={isGeneratingLetter}
+                    className="text-xs font-bold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-1.5 px-3 rounded-lg border border-indigo-200 transition-colors flex items-center space-x-1"
+                  >
+                    {isGeneratingLetter ? (
+                      <span className="animate-pulse">✨ Generating...</span>
+                    ) : (
+                      <span>✨ Auto-Generate with AI</span>
+                    )}
+                  </button>
+                </div>
+
+                <textarea
+                  rows="6"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all font-medium text-sm text-slate-700 placeholder-slate-400"
+                  placeholder="Write your cover letter here, or click the AI button above to generate a highly personalized one instantly..."
+                  value={coverLetter}
+                  onChange={(e) => setCoverLetter(e.target.value)}
+                />
+              </div>
 
               <div className="flex space-x-3">
                 <button

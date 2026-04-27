@@ -27,12 +27,25 @@ const Login = () => {
         throw new Error(data.message || 'Invalid credentials');
       }
 
-      // Store tokens and user details
+      // Store auth details in sessionStorage (tab-scoped) first,
+      // then mirror to localStorage for existing screens that still read local keys.
+      sessionStorage.setItem('token', data.token);
+      sessionStorage.setItem('userName', data.user.name);
+      sessionStorage.setItem('userId', data.user.id);
+      sessionStorage.setItem('studentId', data.user.studentId || '');
+      sessionStorage.setItem('userEmail', data.user.email || '');
+      sessionStorage.setItem('user', JSON.stringify(data.user));
+
       localStorage.setItem('token', data.token);
       localStorage.setItem('userName', data.user.name);
+      localStorage.setItem('userId', data.user.id);
+      localStorage.setItem('studentId', data.user.studentId || '');
+      localStorage.setItem('userEmail', data.user.email || '');
+      localStorage.setItem('user', JSON.stringify(data.user));
       
       // FIX: force lowercase so "Admin" or "admin" both work
       const userRole = data.user.role ? data.user.role.toLowerCase() : 'student';
+      sessionStorage.setItem('userRole', userRole);
       localStorage.setItem('userRole', userRole);
 
       // Route based on role

@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const Application = require('../models/Application');
+const { updateApplicationStatus } = require('../controllers/applications');
 
 const router = express.Router();
 
@@ -64,21 +65,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.put('/:id/status', async (req, res) => {
-  try {
-    const { status } = req.body;
-
-    const updatedApplication = await Application.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true },
-    ).populate('jobId', 'title company');
-
-    return res.json(updatedApplication);
-  } catch (error) {
-    return res.status(500).json({ message: error.message });
-  }
-});
+router.put('/:id/status', updateApplicationStatus);
 
 // @route   GET /api/applications/student/:studentId
 // @desc    Get all applications for a specific student

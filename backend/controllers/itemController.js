@@ -58,10 +58,6 @@ const getItemById = async (req, res) => {
 // Create new item (FIXED VERSION)
 const createItem = async (req, res) => {
   try {
-    console.log('=== CREATE ITEM REQUEST ===');
-    console.log('Request body:', req.body);
-    console.log('Request file:', req.file);
-    
     let itemData;
     
     // Check if data is coming as JSON string (FormData) or direct object
@@ -118,14 +114,10 @@ const createItem = async (req, res) => {
     if (typeof itemData.tags === 'string') {
       itemData.tags = itemData.tags.split(',').map(t => t.trim()).filter(t => t);
     }
-    
-    console.log('Creating item with data:', itemData);
-    
+
     const item = new Item(itemData);
     await item.save();
-    
-    console.log('Item created successfully:', item._id);
-    
+
     res.status(201).json({ 
       success: true, 
       data: item, 
@@ -139,7 +131,6 @@ const createItem = async (req, res) => {
       const imagePath = path.join(__dirname, '..', 'uploads', req.file.filename);
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
-        console.log('Deleted uploaded file due to error:', imagePath);
       }
     }
     
@@ -219,9 +210,7 @@ const approveItem = async (req, res) => {
     item.status = 'approved';
     item.approvedDate = new Date();
     await item.save();
-    
-    console.log(`Item approved: ${item._id} - ${item.title}`);
-    
+
     res.status(200).json({ 
       success: true, 
       data: item, 
@@ -243,9 +232,7 @@ const rejectItem = async (req, res) => {
     
     item.status = 'rejected';
     await item.save();
-    
-    console.log(`Item rejected: ${item._id} - ${item.title}`);
-    
+
     res.status(200).json({ 
       success: true, 
       message: 'Item rejected successfully' 
@@ -269,14 +256,11 @@ const deleteItem = async (req, res) => {
       const imagePath = path.join(__dirname, '..', item.image);
       if (fs.existsSync(imagePath)) {
         fs.unlinkSync(imagePath);
-        console.log('Deleted item image:', imagePath);
       }
     }
     
     await item.deleteOne();
-    
-    console.log(`Item deleted: ${item._id} - ${item.title}`);
-    
+
     res.status(200).json({ 
       success: true, 
       message: 'Item deleted successfully' 

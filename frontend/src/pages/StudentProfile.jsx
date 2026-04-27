@@ -4,9 +4,11 @@ import { Link } from 'react-router-dom';
 const StudentProfile = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profileExists, setProfileExists] = useState(false);
+  const getStoredValue = (key, fallback = '') =>
+    sessionStorage.getItem(key) || localStorage.getItem(key) || fallback;
   
-  const currentUserId = 'IT23328020'; 
-  const currentUserName = localStorage.getItem('userName') || 'Anuk Cooray';
+  const currentUserId = getStoredValue('studentId', 'IT23328020'); 
+  const currentUserName = getStoredValue('userName', 'Anuk Cooray');
 
   const [formData, setFormData] = useState({
     fullName: currentUserName,

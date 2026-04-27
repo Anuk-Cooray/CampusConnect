@@ -94,26 +94,23 @@ exports.deleteStudySession = async (req, res) => {
 // ── EXAMS ──
 exports.getExams = async (req, res) => {
   try {
-    console.log('getExams hit, user:', req.user);
     const exams = await Exam.find({ userId: req.user.id }).sort({ examDate: 1 });
     res.json({ success: true, data: exams });
   } catch (err) {
-    console.log('GET EXAMS ERROR:', err.message);
+    console.error('getExams error:', err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
 exports.createExam = async (req, res) => {
   try {
-    console.log('createExam hit, user:', req.user);
-    console.log('body:', req.body);
     const { subject, examDate, startTime, venue, notes } = req.body;
     const exam = await Exam.create({
       userId: req.user.id, subject, examDate, startTime, venue, notes
     });
     res.status(201).json({ success: true, data: exam });
   } catch (err) {
-    console.log('CREATE EXAM ERROR:', err.message);
+    console.error('createExam error:', err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 };

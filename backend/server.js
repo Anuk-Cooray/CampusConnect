@@ -31,6 +31,7 @@ app.use('/api/kuppi-sessions', require('./routes/kuppiSessions'));
 app.use('/api/questions', require('./routes/questions'));
 app.use('/api/profiles', require('./routes/profiles'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/ai', require('./routes/ai'));
 
 connectDB();
 
